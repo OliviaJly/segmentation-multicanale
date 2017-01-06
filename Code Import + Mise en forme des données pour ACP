@@ -117,7 +117,7 @@ base_quanti['Vir_BAM_3m'] = np.sqrt(base_quanti['Vir_BAM_3m'])
 
 
 
-# Retrait des variables correles et non disciminantes
+# Retrait des variables correlees et non disciminantes
 base_quanti2 = base_quanti.drop(['DEPENSES_RECURRENTES_EST_M','SMS_recus_3m','SMS_authentif_3m'
                                 ,'Automate_depot_3m','Automate_retrait_3m','Duree_CAEL_3m','Duree_CAEL_3m',
                                 'Actions_CAEL_3m','Actions_MaBanque_3m','Ges_Alerte_CAEL_3m','Consult_BGPI_3m',
