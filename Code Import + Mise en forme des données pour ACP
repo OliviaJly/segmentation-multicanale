@@ -43,7 +43,7 @@ types = df.dtypes  # Ok. (Float : int avec décimales)
 
 # Selection des variables quanti + id part dans une nouvelle table df_quanti :
 df_quanti = pd.concat([df['IDPART_CALCULE'],df.select_dtypes(include=['float64','int64'])],axis=1)
-# On garde seulement les variables quanti (float et int), et on fait un cbind (axis=1 veut dire qu'on concatene
+# On garde seulement les variables quanti (float et int), et on fait un cbind avec l'IDPART (axis=1 veut dire qu'on concatene
 # sur les colonnes
 
 ###### Selection des variables interessantes :
