@@ -126,3 +126,8 @@ base_quanti2 = base_quanti.drop(['DEPENSES_RECURRENTES_EST_M','SMS_recus_3m','SM
                                 'Duree_MaBanque_3m'],axis=1)
 # base_quanti2 est la même base d'étude que pour l'ACP sous SAS
 
+
+
+# Enregistre la base en csv :
+base_quanti2.to_csv(path + '/quanti_trans.csv')
+
