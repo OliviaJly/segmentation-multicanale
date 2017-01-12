@@ -7,7 +7,7 @@ Created on Fri Jan  6 09:23:46 2017
 
 
 ## Librairies utilisées
-import pandas as pd
+#import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sn
