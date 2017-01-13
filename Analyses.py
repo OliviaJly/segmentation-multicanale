@@ -88,7 +88,7 @@ plt.scatter(np.array(data_coor)[:,0],np.array(data_coor)[:,1])
 plt.scatter(np.array(data_coor)[:,0],np.array(data_coor)[:,2])
 plt.scatter(np.array(data_coor)[:,1],np.array(data_coor)[:,2])
 
-## Graph des 3 premieres composantes 3D
+# Graph des 3 premieres composantes 3D
 fig = plt.figure(1, figsize=(8, 6))
 ax = Axes3D(fig, elev=-150, azim=110)
 ax.scatter(np.array(data_coor)[:, 0], np.array(data_coor)[:, 1], np.array(data_coor)[:, 2],
