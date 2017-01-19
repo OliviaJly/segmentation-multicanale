@@ -12,6 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sn
 import pylab
+from sklearn.covariance import EllipticEnvelope
 from sklearn.preprocessing import scale
 from sklearn.decomposition import PCA
 from sklearn import cluster
@@ -19,7 +20,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 
 
-
+# comm
 ########## Lecture des données
 
 
@@ -42,6 +43,8 @@ data_boxplot = data_boxplot.astype(np.float32)
 pylab.ylim([-0,20])
 plt.boxplot(data_boxplot)
 del(data_boxplot)
+
+
 
 
 
