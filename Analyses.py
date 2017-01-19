@@ -20,7 +20,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 
 
-
+# comm
 ########## Lecture des données
 
 
