@@ -20,7 +20,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 
 
-# comm
+
 ########## Lecture des données
 
 
@@ -32,7 +32,7 @@ quanti_trans = pd.read_csv(path + '/quanti_trans.csv',delimiter=",",dtype={"IDPA
 types = quanti_trans.dtypes # Ok
 print(types)
 del(types)
-del(path)
+
 
 ########### Boxplot (rapide)
 
@@ -138,6 +138,9 @@ plt.show()
 ## Nouvelle coordonnées
 data_coor2 = pd.DataFrame(pca.transform(data_scale2))
 data_coor2.columns = ["Comp_" + str(l) for l in list(range(1, 38, 1))] # Renomer les colonnes
+
+## Enregistrement des données data_coor2 pour programme kmeans_outliers
+data_coor2.to_csv(path + '/PCA_coor.csv',index=False)
 
 
 ## Scatter plot sur les premiers plans de l'ACP
