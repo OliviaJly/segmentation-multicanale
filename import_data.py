@@ -17,7 +17,7 @@ import pandas as pd
 
 
 # Definition du chemin où sont situées les données :
-path = 'C:/Users/Richard/Documents/GitHub/Segmentation-multicanale2/Données'  
+path = 'C:/Users/Richard/Documents/GitHub/Segmentation-multicanale2/Données/v2'  
 
 # Import des données
 df = pd.read_csv(path + '/OLIVIA_BASE_PART_092016.csv',nrows=20000,delimiter=";",encoding = "ISO-8859-1",
@@ -53,6 +53,7 @@ df_quanti = pd.concat([df['IDPART_CALCULE'],df.select_dtypes(include=['float64',
 # On garde seulement les variables quanti (float et int), et on fait un cbind (axis=1 veut dire qu'on concatene
 # sur les colonnes
 
+
 ###### Selection des variables interessantes :
 
     
@@ -75,35 +76,29 @@ var = var[var.vf == False] # On garde seulement les variables quand c'est False 
 # fonction keep, mais uniquement de fonction drop
 
 var_drop = list(var['noms']) # Extraction de la liste des variables dont on veut se debarasser 
+var_drop.append('top_depose') #ajout des variables top depose et top en ligne qui sont des var quali 
+var_drop.append('top_enligne')
+
 base_quanti = df_quanti.drop(var_drop,axis=1)   # Drop les variables qu'on ne veut plus
 ### Fin code suppression des variables sur 1 et 2 mois
- del(df,df_quanti,i,sub_1m,sub_2m,types,var,var_drop,var_names,x)
 
-# Retrait des variables correlees et non disciminantes
-base_quanti = base_quanti.drop(['DEPENSES_RECURRENTES_EST_M','SMS_recus_3m','SMS_authentif_3m'
-                                ,'Automate_depot_3m','Automate_retrait_3m','Duree_CAEL_3m','Duree_CAEL_3m',
-                                'Actions_CAEL_3m','Actions_MaBanque_3m','Ges_Alerte_CAEL_3m','Consult_BGPI_3m',
-                                'Consult_carte_3m','Dem_contact_3m','Simul_creditconso_3m',
-                                'Simul_credithabitat_3m','Consult_Sofinco_3m','Email_3m','Appels_entrants_3m',
-                                'Duree_MaBanque_3m'],axis=1)
+del(df,df_quanti,i,sub_1m,sub_2m,types,var,var_drop,var_names,x)
 
-
-## Enregistrement de la base intermédiaire avant transformation
-base_quanti.to_csv(path + '/quanti.csv',index=False)
+ 
+ # Utilisation du package numpy :
+import numpy as np
 
 
 ### Recoder les variables comme dans le code SAS (transformations monotones)
-base_quanti2 = base_quanti
-# Utilisation du package numpy :
-import numpy as np
+base_quanti2 = base_quanti.copy()
 
 base_quanti2['MT_OPERATION_DEPOT_3m'] = np.log(base_quanti2['MT_OPERATION_DEPOT_3m']+ 1)
 base_quanti2['mt_paiement_chq_3m'] = np.log(-base_quanti2['mt_paiement_chq_3m']+ 1)
 base_quanti2['mt_paiement_carte_3m'] = np.log(-base_quanti2['mt_paiement_carte_3m']+ 1)
 base_quanti2['REVENU_EST_MM'] = np.log(base_quanti2['REVENU_EST_MM']+ 1)
+base_quanti2['DEPENSES_RECURRENTES_EST_M'] = np.log(base_quanti2['DEPENSES_RECURRENTES_EST_M']+ 1)
 base_quanti2['SURFACE_FINANCIERE'] = np.log(base_quanti2['SURFACE_FINANCIERE'] -min(base_quanti2['SURFACE_FINANCIERE']) + 1)
 base_quanti2['ENCOURS_DAV'] = np.log(base_quanti2['ENCOURS_DAV']+ 1)
-base_quanti2['SMS_recus_3m'] = np.sqrt(base_quanti2['SMS_recus_3m'])
 base_quanti2['Agence_3m'] = np.sqrt(base_quanti2['Agence_3m'])
 base_quanti2['Agence_vente_3m'] = np.sqrt(base_quanti2['Agence_vente_3m'])
 base_quanti2['Agence_retrait_3m'] = np.sqrt(base_quanti2['Agence_retrait_3m'])
@@ -112,37 +107,134 @@ base_quanti2['Agence_rdv_3m'] = np.sqrt(base_quanti2['Agence_rdv_3m'])
 base_quanti2['Agence_vir_3m'] = np.sqrt(base_quanti2['Agence_vir_3m'])
 base_quanti2['Connexion_CAEL_3m'] = np.log(base_quanti2['Connexion_CAEL_3m']+ 1)
 base_quanti2['Connexion_MaBanque_3m'] = np.log(base_quanti2['Connexion_MaBanque_3m']+ 1)
+base_quanti2['Actions_CAEL_3m'] = np.log(base_quanti2['Actions_CAEL_3m']+ 1)
+base_quanti2['Actions_MaBanque_3m'] = np.log(base_quanti2['Actions_MaBanque_3m']+ 1)
 base_quanti2['Lecture_mess_3m'] = np.sqrt(base_quanti2['Lecture_mess_3m'])
 base_quanti2['Ecriture_mess_3m'] = np.sqrt(base_quanti2['Ecriture_mess_3m'])
+base_quanti2['Ges_Alerte_CAEL_3m'] = np.sqrt(base_quanti2['Ges_Alerte_CAEL_3m'])
+base_quanti2['Consult_BGPI_3m'] = np.sqrt(base_quanti2['Ges_Alerte_CAEL_3m'])
+base_quanti2['Ges_Alerte_CAEL_3m'] = np.sqrt(base_quanti2['Consult_carte_3m'])
 base_quanti2['Consult_CAtitre_3m'] = np.sqrt(base_quanti2['Consult_CAtitre_3m'])
 base_quanti2['Consult_credit_3m'] = np.log(base_quanti2['Consult_credit_3m']+1)
 base_quanti2['Consult_epargne_3m'] = np.log(base_quanti2['Consult_epargne_3m']+1)
-base_quanti2['Consult_epargne_3m'] = np.log(base_quanti2['Consult_epargne_3m']+1)
+base_quanti2['Dem_contact_3m'] = np.sqrt(base_quanti2['Dem_contact_3m'])
 base_quanti2['Consult_PACIFICA_3m'] = np.sqrt(base_quanti2['Consult_PACIFICA_3m'])
 base_quanti2['Consult_PREDICA_3m'] = np.sqrt(base_quanti2['Consult_PREDICA_3m'])
+base_quanti2['Simul_creditconso_3m'] = np.sqrt(base_quanti2['Simul_creditconso_3m'])
+base_quanti2['Simul_credithabitat_3m'] = np.sqrt(base_quanti2['Simul_credithabitat_3m'])
+base_quanti2['Consult_Sofinco_3m'] = np.sqrt(base_quanti2['Consult_Sofinco_3m'])
 base_quanti2['Vir_BAM_3m'] = np.sqrt(base_quanti2['Vir_BAM_3m'])
 
-# Variables inutilisées
-#base_quanti2['DEPENSES_RECURRENTES_EST_M'] = np.log(base_quanti2['DEPENSES_RECURRENTES_EST_M']+ 1)
-#base_quanti2['SMS_authentif_3m'] = np.sqrt(base_quanti2['SMS_authentif_3m'])
-#base_quanti2['Duree_CAEL_3m'] = np.log(base_quanti2['Duree_CAEL_3m']+ 1)
-#base_quanti2['Duree_MaBanque_3m'] = np.log(base_quanti2['Duree_MaBanque_3m']+ 1)
-#base_quanti2['Actions_CAEL_3m'] = np.log(base_quanti2['Actions_CAEL_3m']+ 1)
-#base_quanti2['Actions_MaBanque_3m'] = np.log(base_quanti2['Actions_MaBanque_3m']+ 1)
-#base_quanti2['Ges_Alerte_CAEL_3m'] = np.sqrt(base_quanti2['Ges_Alerte_CAEL_3m'])
-#base_quanti2['Consult_BGPI_3m'] = np.sqrt(base_quanti2['Consult_BGPI_3m'])
-#base_quanti2['Consult_carte_3m'] = np.sqrt(base_quanti2['Consult_carte_3m'])
-#base_quanti2['Dem_contact_3m'] = np.sqrt(base_quanti2['Dem_contact_3m'])
-#base_quanti2['Simul_creditconso_3m'] = np.sqrt(base_quanti2['Simul_creditconso_3m'])
-#base_quanti2['Simul_credithabitat_3m'] = np.sqrt(base_quanti2['Simul_credithabitat_3m'])
-#base_quanti2['Consult_Sofinco_3m'] = np.sqrt(base_quanti2['Consult_Sofinco_3m'])
+
+ # calcul des correlations 
+base_corr=base_quanti2.drop(['IDPART_CALCULE'], axis=1)
+mat_corr=np.corrcoef(base_corr,rowvar=0) #matrice des correlations (pearson)
+names = list(base_corr.columns.values) 
+mat_corr = pd.DataFrame(mat_corr, index=names, columns=names) #ajout des noms aux lignes et colonnes
+
+#nuage de points entre var quanti
+
+## 1ere methode : utilise le package plotly, pas vraiment d'intérêt pour les graphiques simples
+import plotly.plotly as py
+import plotly.graph_objs as go
+import plotly 
+plotly.tools.set_credentials_file(username='oliviaJLY', api_key='BCwodb0FVCOegRrBDiST')
+
+# Create a trace
+trace = go.Scatter(
+    x = base_quanti['DEPENSES_RECURRENTES_EST_M'],
+    y = base_quanti['REVENU_EST_MM'],
+    mode = 'markers',
+    marker = dict(
+        color = 'FFBAD2',
+        line = dict(width = 1)
+    )
+)
+    
+layout = go.Layout(
+    xaxis=dict(title='Dépenses', range=[0,30000]),
+    yaxis=dict(title='Revenus', range=[0,30000]),
+title='Revenus et dépenses mensuels des clients')
+
+data = [trace]
+fig=go.Figure(data=data,layout=layout)
+# Plot and embed in ipython notebook!
+py.iplot(fig, filename='basic-scatter')
 
 
+## 2eme methode : avec le package matplotlib
+import matplotlib.pyplot as plt
+import pylab
+
+#Scatter plot depenses et revenus
+x = base_quanti['DEPENSES_RECURRENTES_EST_M']
+y = base_quanti['REVENU_EST_MM']
+
+plt.style.use('ggplot')
+plt.plot(x,y,'o')
+# Chart title
+plt.title('Revenus et dépenses mensuels des clients')
+# y label
+plt.ylabel('Revenus')
+# x label
+plt.xlabel('Dépenses')
+# set the figure boundaries
+plt.xlim(0,20000)
+plt.ylim(0,20000)
+plt.show()
+
+#Actions CAEL et Actions Ma Banque
+x = base_corr['Actions_CAEL_3m']
+y = base_corr['Actions_MaBanque_3m']
+
+plt.style.use('ggplot')
+plt.plot(x,y,'o')
+plt.xticks([], []) #enleve l'échelle des axes
+plt.yticks([], [])
+# Chart title
+plt.title("Nb d'actions CAEL en fct du nb d'actions Ma Banque")
+# y label
+plt.ylabel('Actions Ma Banque')
+# x label
+plt.xlabel('Actions CAEL')
+# set the figure boundaries
+plt.show()
+
+#Connexion Ma Banque et age 
+x = base_quanti['age']
+y = base_quanti['Connexion_MaBanque_3m']
+
+import scipy.stats
+scipy.stats.spearmanr(x,y) #correlation spearman (non parametrique), moins sensible aux outliers
+
+x = base_corr['age']
+y = base_corr['Connexion_MaBanque_3m']
+
+plt.style.use('ggplot')
+plt.plot(x,y,'o')
+plt.xticks([], []) #enleve l'échelle des axes
+plt.yticks([], [])
+# Chart title
+plt.title("Connexions à Ma Banque en fct de l'âge")
+# y label
+plt.ylabel('Connexions Ma Banque')
+# x label
+plt.xlabel('Age')
+# set the figure boundaries
+plt.show()
+
+
+# Retrait des variables correlees et non discriminantes
+base_quanti2 = base_quanti2.drop(['DEPENSES_RECURRENTES_EST_M','SMS_recus_3m','SMS_authentif_3m'
+                                ,'Automate_depot_3m','Automate_retrait_3m','Duree_CAEL_3m','Duree_MaBanque_3m',
+                                'Actions_CAEL_3m','Actions_MaBanque_3m','Ges_Alerte_CAEL_3m','Consult_BGPI_3m',
+                                'Consult_carte_3m','Dem_contact_3m','Simul_creditconso_3m',
+                                'Simul_credithabitat_3m','Consult_Sofinco_3m','Email_3m','Appels_entrants_3m'],axis=1)
 
 
 # base_quanti2 est la même base d'étude que pour l'ACP sous SAS
 
 
 # Enregistre la base en csv :
-base_quanti2.to_csv(path + '/quanti_trans.csv',index=False)
+base_quanti2.to_csv(path + '/quanti_trans2.csv',index=False)
 
