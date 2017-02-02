@@ -241,4 +241,3 @@ sn.boxplot(x='cluster', y='nb_paiement_chq_3m', data=quanti_trans)
 sn.boxplot(x='cluster', y='Agence_3m', data=quanti_trans)
 sn.boxplot(x='cluster', y='Consult_Comptes_3m', data=quanti_trans)
 
-# TEST
