@@ -43,8 +43,6 @@ types = df.dtypes  # Ok. (Float : int avec décimales)
 
 
 
-
-
 ############ MMISE EN FORME DE LA BASE D'ETUDE (ACP) :
 
 # Selection des variables quanti + id part dans une nouvelle table df_quanti :
@@ -54,6 +52,56 @@ df_quanti = pd.concat([df['IDPART_CALCULE'],
 # (axis=1 veut dire qu'on concatene sur les colonnes
 
 
+#distribution des var quali top_depose et top_enligne
+count_depose=df_quanti['top_depose'].value_counts()
+plt.pie(count_depose, colors=['lightskyblue','gold'],labels=['0','1'], autopct='%1.1f%%', startangle=90)
+plt.axis('equal')
+plt.suptitle('Distribution de la variable top depose')
+plt.savefig('distrib_topdepose.png', dpi=600)
+plt.show()
+
+count_depose=df_quanti['top_enligne'].value_counts()
+plt.pie(count_depose, colors=['lightskyblue','gold'],labels=['0','1'], autopct='%1.1f%%', startangle=90)
+plt.axis('equal')
+plt.suptitle('Distribution de la variable top en ligne')
+plt.savefig('distrib_topenligne.png', dpi=600)
+plt.show()
+
+#on croise top depose et top en ligne avec les connexions CAEL et Ma Banque
+sn.boxplot(x='top_depose', y='Connexion_MaBanque_3m', data=df_quanti)
+sn.boxplot(x='top_depose', y='Connexion_CAEL_3m', data=df_quanti)
+sn.boxplot(x='top_enligne', y='Connexion_MaBanque_3m', data=df_quanti)
+sn.boxplot(x='top_enligne', y='Connexion_CAEL_3m', data=df_quanti)
+
+
+moy = df_quanti.groupby('top_depose')['Connexion_MaBanque_3m', 'Connexion_CAEL_3m'].mean()
+
+#barplot
+barWidth = 0.4
+y1 = moy.ix[0]
+y2 = moy.ix[1]
+r1 = range(len(y1))
+r2 = [x + barWidth for x in r1]
+
+plt.bar(r1, y1, width = barWidth, color = ['yellow' for i in y1], label='top depose 0')
+plt.bar(r2, y2, width = barWidth, color = ['pink' for i in y1], label='top depose 1')
+plt.xticks([r + barWidth for r in range(len(y1))], ['Connex MaBanque', 'Connex CAEL'])
+ 
+plt.suptitle('Nb de connexions moyen Ma Banque et CAEL par catégorie de top depose')
+plt.legend()    
+plt.savefig('connexions_vs_topdepose.png', dpi=600)               
+
+
+medi = df_quanti.groupby('top_depose')['Connexion_MaBanque_3m', 'Connexion_CAEL_3m'].median()
+# + de connexions MB et CAEL pour les deposes et enligne
+
+# Check distribution des nb depose et enligne
+layout = dict(autosize = True)
+plt.hist(np.array(df_quanti['nb_contrats_depose']))
+plt.hist(np.array(df_quanti['nb_contrats_enligne']))
+
+   
+   
 ###### Selection des variables interessantes :
 
 ### Code suppression des variables sur 1 et 2 mois :
@@ -81,25 +129,8 @@ var_drop.append('top_enligne')
 
 base_quanti = df_quanti.drop(var_drop, axis=1)   # Drop les variables qu'on ne veut plus
 ### Fin code suppression des variables sur 1 et 2 mois
-sn.boxplot(x='top_depose', y='Connexion_MaBanque_3m', data=df_quanti)
-sn.boxplot(x='top_depose', y='Connexion_CAEL_3m', data=df_quanti)
-sn.boxplot(x='top_enligne', y='Connexion_MaBanque_3m', data=df_quanti)
-sn.boxplot(x='top_enligne', y='Connexion_CAEL_3m', data=df_quanti)
-moy=df_quanti.groupby('top_depose')['Connexion_MaBanque_3m', 'Connexion_CAEL_3m',
-                                    'Connexion_MaBanque_3m', 'Connexion_CAEL_3m'].mean()
-
-medi=df_quanti.groupby('top_depose')['Connexion_MaBanque_3m', 'Connexion_CAEL_3m',
-                                    'Connexion_MaBanque_3m', 'Connexion_CAEL_3m'].median()
-# + de connexions MB et CAEL pour les deposes et enligne
-
-# Check distribution des nb depose et enligne
-layout = dict(autosize= True)
-plt.hist(np.array(df_quanti['nb_contrats_depose']))
-plt.hist(np.array(df_quanti['nb_contrats_enligne']))
 
 del(df, df_quanti, i, sub_1m, sub_2m, types, var, var_drop, var_names, x)
-
-
 
 
 
@@ -139,6 +170,7 @@ base_quanti2['Simul_credithabitat_3m'] = np.sqrt(base_quanti2['Simul_credithabit
 base_quanti2['Consult_Sofinco_3m'] = np.sqrt(base_quanti2['Consult_Sofinco_3m'])
 base_quanti2['Vir_BAM_3m'] = np.sqrt(base_quanti2['Vir_BAM_3m'])
 
+
 # Test transformations pour scatter plots
 base_quanti.boxplot('Connexion_CAEL_3m')
 base_quanti.boxplot('Connexion_MaBanque_3m')
@@ -160,7 +192,7 @@ mat_corr = pd.DataFrame(mat_corr, index = names, columns = names)
 # Corr nb_contrats_depose mabanque = 0.12
 # Corr nb_contrats_depose cael = 0.08
 
-
+scipy.stats.spearmanr(base_quanti['Connexion_MaBanque_3m'],base_quanti2['nb_contrats_depose'])
 
 
 #nuage de points entre var quanti
@@ -209,7 +241,7 @@ plt.xlabel('Dépenses')
 # set the figure boundaries
 plt.xlim(0, 20000)
 plt.ylim(0, 20000)
-plt.savefig('Dep_revenus.png',dpi=600)
+plt.savefig('Dep_revenus.png', dpi=600)
 # OK
 
 
@@ -228,7 +260,7 @@ plt.ylabel('Actions Ma Banque')
 # x label
 plt.xlabel('Actions CAEL')
 # set the figure boundaries
-plt.savefig('Actions_CAEL_MABANQUE.png',dpi=600)
+plt.savefig('Actions_CAEL_MABANQUE.png', dpi=600)
 # Mieux en transformées
 
 
@@ -282,7 +314,7 @@ plt.ylabel('Connexions Ma Banque')
 # x label
 plt.xlabel('Connexions CAEL')
 # set the figure boundaries
-plt.savefig('Connexions_CAEL_MABANQUE.png',dpi=600)
+plt.savefig('Connexions_CAEL_MABANQUE.png', dpi=600)
 # Mieux en log
 
 
@@ -307,7 +339,7 @@ plt.ylabel('Connexions Ma Banque')
 # x label
 plt.xlabel('Age')
 # set the figure boundaries
-plt.savefig('figure_1.png',dpi=600)
+plt.savefig('figure_1.png', dpi=600)
 
 #Connexion Ma Banque et age sur base transformée
 x = base_quanti2['age']
@@ -330,7 +362,7 @@ plt.ylabel('Connexions Ma Banque')
 # x label
 plt.xlabel('Age')
 # set the figure boundaries
-plt.savefig('Connexions_MABANQUE_AGE.png',dpi=600)
+plt.savefig('Connexions_MABANQUE_AGE.png', dpi=600)
 # Mieux en transformée
 
 # Pas intéressant de regarder les Scatters plots entre les dépose/ en ligne avec CAEL et ma banque :
