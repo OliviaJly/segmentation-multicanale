@@ -169,6 +169,7 @@ base_quanti2['Simul_creditconso_3m'] = np.sqrt(base_quanti2['Simul_creditconso_3
 base_quanti2['Simul_credithabitat_3m'] = np.sqrt(base_quanti2['Simul_credithabitat_3m'])
 base_quanti2['Consult_Sofinco_3m'] = np.sqrt(base_quanti2['Consult_Sofinco_3m'])
 base_quanti2['Vir_BAM_3m'] = np.sqrt(base_quanti2['Vir_BAM_3m'])
+base_quanti2['Consult_Comptes_3m'] = np.log(base_quanti2['Consult_Comptes_3m']+1)
 
 
 # Test transformations pour scatter plots

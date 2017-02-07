@@ -31,6 +31,7 @@ del types
 
 
 ########### Boxplot (rapide)
+quanti_trans['Consult_Comptes_3m']=np.log(quanti_trans['Consult_Comptes_3m']+1)
 data_boxplot = np.array(quanti_trans)
 data_boxplot = data_boxplot[:, 1:43]
 data_boxplot = data_boxplot.astype(np.float32)
@@ -85,7 +86,7 @@ data_coor.columns = ["Comp_" + str(l) for l in list(range(1, 40, 1))] # Renomer 
 data_coor.to_csv(path + '/PCA_coor2.csv', index=False)
 
 
-## Scatter plot sur les premiers plans de l'ACP
+## Scatter plot des individus sur les premiers plans de l'ACP
 
 pylab.ylim([-7, 10])
 plt.boxplot(np.array(data_coor)[:, 0:39])
@@ -107,25 +108,27 @@ ax.set_zlabel("Comp3")
 ax.w_zaxis.set_ticklabels([])
 
 ## Biplot
-xvector = pca.components_[0] #1ere composante exprimee dans le referentiel initial des features
-yvector = pca.components_[2]
+vect_propres=pca.components_
+xvector = pca.components_[1]*-1 #1ere composante exprimee dans le referentiel initial des features
+yvector = pca.components_[2] #pour inverser l'axe des y, multiplier par -1
 
-xs = pca.transform(data_scale)[:, 0] #coordonnees des individus sur 1ere composante
-ys = pca.transform(data_scale)[:, 2]
+xs = score[:, 1] #coordonnees des individus sur 1ere composante
+ys = score[:, 2]
 
 plt.figure(figsize=(16, 8))
-plt.title('Représentation des variables dans les composantes 1 et 3')
-plt.xlabel('Composante 1')
+plt.title('Représentation des variables dans les composantes 2 et 3')
+plt.xlabel('Composante 2')
 plt.ylabel('composante 3')
 
-pylab.ylim([-3, 2])
-pylab.xlim([-3, 6])
+pylab.ylim([-3, 4])
+pylab.xlim([-4, 6])
 for i in range(len(xvector)): #len(xvector) = nb features
 # arrows project features (ie columns from csv) as vectors onto PC axes
     plt.arrow(0, 0, xvector[i]*max(xs), yvector[i]*max(ys),
               color='r', width=0.0005, head_width=0.0025, zorder=1)
-    plt.text(xvector[i]*max(xs)*1.2, yvector[i]*max(ys)*1.2,
+    plt.text(xvector[i]*max(xs)*1.1, yvector[i]*max(ys)*1.1,
              list(base_test.columns.values)[i], color='r')
+    
 
 for i in range(len(xs)): #len(xs) = nb d'invidus
 # circles project documents (ie rows from csv) as points onto PC axes
