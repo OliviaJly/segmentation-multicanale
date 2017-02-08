@@ -31,7 +31,6 @@ del types
 
 
 ########### Boxplot (rapide)
-quanti_trans['Consult_Comptes_3m']=np.log(quanti_trans['Consult_Comptes_3m']+1)
 data_boxplot = np.array(quanti_trans)
 data_boxplot = data_boxplot[:, 1:43]
 data_boxplot = data_boxplot.astype(np.float32)
