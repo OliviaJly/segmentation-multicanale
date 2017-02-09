@@ -106,9 +106,77 @@ ax.w_yaxis.set_ticklabels([])
 ax.set_zlabel("Comp3")
 ax.w_zaxis.set_ticklabels([])
 
-## Biplot
-vect_propres=pca.components_
-xvector = pca.components_[1]*-1 #1ere composante exprimee dans le referentiel initial des features
+
+
+## Biplot (Composantes 1 et 2)
+vect_propres = pca.components_
+xvector = pca.components_[0]#*-1 #1ere composante exprimee dans le referentiel initial des features
+yvector = pca.components_[1] #pour inverser l'axe des y, multiplier par -1
+
+xs = score[:, 0] #coordonnees des individus sur 1ere composante
+ys = score[:, 1]
+
+plt.figure(figsize=(16, 8))
+plt.title('Représentation des variables dans les composantes 1 et 2')
+plt.xlabel('Composante 1')
+plt.ylabel('composante 2')
+
+pylab.ylim([-4, 3])
+pylab.xlim([-3, 5]) #[-4, 4]
+for i in range(len(xvector)): #len(xvector) = nb features
+# arrows project features (ie columns from csv) as vectors onto PC axes
+    plt.arrow(0, 0, xvector[i]*max(xs), yvector[i]*max(ys),
+              color='r', width=0.0005, head_width=0.0025, zorder=1)
+    plt.text(xvector[i]*max(xs)*1.1, yvector[i]*max(ys)*1.1,
+             list(base_test.columns.values)[i], color='r')
+
+
+for i in range(len(xs)): #len(xs) = nb d'invidus
+# circles project documents (ie rows from csv) as points onto PC axes
+    plt.plot(xs[i], ys[i], 'g', zorder=2)
+    #plt.text(xs[i]*1.2, ys[i]*1.2, list(base_test2.index)[i], color='b')
+plt.show()
+
+
+
+
+
+
+## Biplot (Composantes 1 et 3)
+vect_propres = pca.components_
+xvector = pca.components_[0]#*-1 #1ere composante exprimee dans le referentiel initial des features
+yvector = pca.components_[2] #pour inverser l'axe des y, multiplier par -1
+
+xs = score[:, 0] #coordonnees des individus sur 1ere composante
+ys = score[:, 2]
+
+plt.figure(figsize=(16, 8))
+plt.title('Représentation des variables dans les composantes 1 et 3')
+plt.xlabel('Composante 1')
+plt.ylabel('composante 3')
+
+pylab.ylim([-3, 4.5])
+pylab.xlim([-3, 5]) #[-4, 4]
+for i in range(len(xvector)): #len(xvector) = nb features
+# arrows project features (ie columns from csv) as vectors onto PC axes
+    plt.arrow(0, 0, xvector[i]*max(xs), yvector[i]*max(ys),
+              color='r', width=0.0005, head_width=0.0025, zorder=1)
+    plt.text(xvector[i]*max(xs)*1.1, yvector[i]*max(ys)*1.1,
+             list(base_test.columns.values)[i], color='r')
+
+
+for i in range(len(xs)): #len(xs) = nb d'invidus
+# circles project documents (ie rows from csv) as points onto PC axes
+    plt.plot(xs[i], ys[i], 'g', zorder=2)
+    #plt.text(xs[i]*1.2, ys[i]*1.2, list(base_test2.index)[i], color='b')
+plt.show()
+
+
+
+
+## Biplot (Composantes 2 et 3)
+vect_propres = pca.components_
+xvector = pca.components_[1]#*-1 #1ere composante exprimee dans le referentiel initial des features
 yvector = pca.components_[2] #pour inverser l'axe des y, multiplier par -1
 
 xs = score[:, 1] #coordonnees des individus sur 1ere composante
@@ -119,21 +187,18 @@ plt.title('Représentation des variables dans les composantes 2 et 3')
 plt.xlabel('Composante 2')
 plt.ylabel('composante 3')
 
-pylab.ylim([-3, 4])
-pylab.xlim([-4, 6])
+pylab.ylim([-4, 6])
+pylab.xlim([-4, 4])
 for i in range(len(xvector)): #len(xvector) = nb features
 # arrows project features (ie columns from csv) as vectors onto PC axes
     plt.arrow(0, 0, xvector[i]*max(xs), yvector[i]*max(ys),
               color='r', width=0.0005, head_width=0.0025, zorder=1)
     plt.text(xvector[i]*max(xs)*1.1, yvector[i]*max(ys)*1.1,
              list(base_test.columns.values)[i], color='r')
-    
+
 
 for i in range(len(xs)): #len(xs) = nb d'invidus
 # circles project documents (ie rows from csv) as points onto PC axes
     plt.plot(xs[i], ys[i], 'g', zorder=2)
     #plt.text(xs[i]*1.2, ys[i]*1.2, list(base_test2.index)[i], color='b')
 plt.show()
-
-
-
