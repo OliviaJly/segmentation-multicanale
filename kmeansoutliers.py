@@ -188,13 +188,13 @@ C = np.array(pd.concat([pd.DataFrame(np.array(data_coor3)), \
 fig = plt.figure(1, figsize=(8, 6))
 ax = Axes3D(fig, elev=-150, azim=110)
 ax.scatter(C[C[:, 10] == 0, 0], C[C[:, 10] == 0, 1], C[C[:, 10] == 0, 2], \
-           c='lime', cmap=plt.cm.Paired, label='Groupe 1 (Inactifs)')
+           c='royalblue', cmap=plt.cm.Paired, label='Groupe 1 (Inactifs)')
 ax.scatter(C[C[:, 10] == 1, 0], C[C[:, 10] == 1, 1], C[C[:, 10] == 1, 2], \
-           c='darkmagenta', cmap=plt.cm.Paired, label='Groupe 2 (Retraités)')
+           c='forestgreen', cmap=plt.cm.Paired, label='Groupe 2 (Retraités)')
 ax.scatter(C[C[:, 10] == 2, 0], C[C[:, 10] == 2, 1], C[C[:, 10] == 2, 2], \
-           c='royalblue', cmap=plt.cm.Paired, label='Groupe 3 (CAEL)')
+           c='firebrick', cmap=plt.cm.Paired, label='Groupe 3 (CAEL)')
 ax.scatter(C[C[:, 10] == 3, 0], C[C[:, 10] == 3, 1], C[C[:, 10] == 3, 2], \
-           c='cyan', cmap=plt.cm.Paired, label='Groupe 4 (Ma Banque)')
+           c='slateblue', cmap=plt.cm.Paired, label='Groupe 4 (Ma Banque)')
 ax.set_title("Représentation des partenaires \n dans la segmentation")
 ax.set_xlabel("\n Composante 1 \n Activité -- Inactivité")
 #ax.w_xaxis.set_ticklabels([])
@@ -228,3 +228,18 @@ plt.xticks([r + barWidth for r in range(len(y1))], ['Cluster 1 (Inactifs)', \
 plt.suptitle('Nb moyen de Top en ligne et Top depose par cluster')
 plt.legend()
 plt.savefig('TOP_par_clusters', dpi=600)
+
+
+
+# En résumé :
+
+# Pourcentage de TOP dans toute la base
+(sum(clustered_data['top_enligne']) / len(clustered_data.axes[0])) * 100 # 0.4 %
+(sum(clustered_data['top_depose']) / len(clustered_data.axes[0])) * 100 # 2.96 %
+
+# Pourcentage dans les clusters
+mean_top_enligne * 100 # 0.01% pour cluster 1, 0.13% pour cluster 2, 1,3% pour cluster 3 et 0.4% pour cluster 4
+mean_top_depose * 100 # 0.17% pour cluster 1, 0.4% pour cluster 2, 9% pour cluster 3 et 4% pour cluster 4
+
+
+    
