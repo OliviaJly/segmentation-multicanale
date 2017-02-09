@@ -53,15 +53,17 @@ df_quanti = pd.concat([df['IDPART_CALCULE'],
 
 
 #distribution des var quali top_depose et top_enligne
-count_depose=df_quanti['top_depose'].value_counts()
-plt.pie(count_depose, colors=['lightskyblue','gold'],labels=['0','1'], autopct='%1.1f%%', startangle=90)
+count_depose = df_quanti['top_depose'].value_counts()
+plt.pie(count_depose, colors=['lightskyblue', 'gold'], labels=['0', '1'], \
+        autopct='%1.1f%%', startangle=90)
 plt.axis('equal')
 plt.suptitle('Distribution de la variable top depose')
 plt.savefig('distrib_topdepose.png', dpi=600)
 plt.show()
 
-count_depose=df_quanti['top_enligne'].value_counts()
-plt.pie(count_depose, colors=['lightskyblue','gold'],labels=['0','1'], autopct='%1.1f%%', startangle=90)
+count_depose = df_quanti['top_enligne'].value_counts()
+plt.pie(count_depose, colors=['lightskyblue', 'gold'], labels=['0', '1'], \
+        autopct='%1.1f%%', startangle=90)
 plt.axis('equal')
 plt.suptitle('Distribution de la variable top en ligne')
 plt.savefig('distrib_topenligne.png', dpi=600)
@@ -83,25 +85,25 @@ y2 = moy.ix[1]
 r1 = range(len(y1))
 r2 = [x + barWidth for x in r1]
 
-plt.bar(r1, y1, width = barWidth, color = ['yellow' for i in y1], label='top depose 0')
-plt.bar(r2, y2, width = barWidth, color = ['pink' for i in y1], label='top depose 1')
+plt.bar(r1, y1, width=barWidth, color=['yellow' for i in y1], label='top depose 0')
+plt.bar(r2, y2, width=barWidth, color=['pink' for i in y1], label='top depose 1')
 plt.xticks([r + barWidth for r in range(len(y1))], ['Connex MaBanque', 'Connex CAEL'])
- 
+
 plt.suptitle('Nb de connexions moyen Ma Banque et CAEL par catégorie de top depose')
-plt.legend()    
-plt.savefig('connexions_vs_topdepose.png', dpi=600)               
+plt.legend()
+plt.savefig('connexions_vs_topdepose.png', dpi=600)
 
 
 medi = df_quanti.groupby('top_depose')['Connexion_MaBanque_3m', 'Connexion_CAEL_3m'].median()
 # + de connexions MB et CAEL pour les deposes et enligne
 
 # Check distribution des nb depose et enligne
-layout = dict(autosize = True)
+layout = dict(autosize=True)
 plt.hist(np.array(df_quanti['nb_contrats_depose']))
 plt.hist(np.array(df_quanti['nb_contrats_enligne']))
 
-   
-   
+
+
 ###### Selection des variables interessantes :
 
 ### Code suppression des variables sur 1 et 2 mois :
@@ -142,7 +144,7 @@ base_quanti2['mt_paiement_chq_3m'] = np.log(-base_quanti2['mt_paiement_chq_3m']+
 base_quanti2['mt_paiement_carte_3m'] = np.log(-base_quanti2['mt_paiement_carte_3m']+ 1)
 base_quanti2['REVENU_EST_MM'] = np.log(base_quanti2['REVENU_EST_MM']+ 1)
 base_quanti2['DEPENSES_RECURRENTES_EST_M'] = np.log(base_quanti2['DEPENSES_RECURRENTES_EST_M']+ 1)
-base_quanti2['SURFACE_FINANCIERE'] = np.log(base_quanti2['SURFACE_FINANCIERE'] -min(base_quanti2['SURFACE_FINANCIERE']) + 1)
+base_quanti2['SURFACE_FINANCIERE'] = np.log(base_quanti2['SURFACE_FINANCIERE'] - min(base_quanti2['SURFACE_FINANCIERE']) + 1)
 base_quanti2['ENCOURS_DAV'] = np.log(base_quanti2['ENCOURS_DAV']+ 1)
 base_quanti2['Agence_3m'] = np.sqrt(base_quanti2['Agence_3m'])
 base_quanti2['Agence_vente_3m'] = np.sqrt(base_quanti2['Agence_vente_3m'])
@@ -188,12 +190,12 @@ base_quanti2['Actions_MABANQUE_CR'] = (base_quanti['Actions_MaBanque_3m'] - np.m
 base_corr = base_quanti2.drop(['IDPART_CALCULE'], axis=1)
 mat_corr = np.corrcoef(base_corr, rowvar=0) #matrice des correlations (pearson)
 names = list(base_corr.columns.values)
-mat_corr = pd.DataFrame(mat_corr, index = names, columns = names)
+mat_corr = pd.DataFrame(mat_corr, index=names, columns=names)
 #ajout des noms aux lignes et colonnes
 # Corr nb_contrats_depose mabanque = 0.12
 # Corr nb_contrats_depose cael = 0.08
 
-scipy.stats.spearmanr(base_quanti['Connexion_MaBanque_3m'],base_quanti2['nb_contrats_depose'])
+scipy.stats.spearmanr(base_quanti['Connexion_MaBanque_3m'], base_quanti2['nb_contrats_depose'])
 
 
 #nuage de points entre var quanti
@@ -204,12 +206,12 @@ plotly.tools.set_credentials_file(username='oliviaJLY', api_key='BCwodb0FVCOegRr
 
 # Create a trace
 trace = go.Scatter(
-    x = base_quanti['DEPENSES_RECURRENTES_EST_M'],
-    y = base_quanti['REVENU_EST_MM'],
-    mode = 'markers',
-    marker = dict(
-        color = 'FFBAD2',
-        line = dict(width = 1)
+    x=base_quanti['DEPENSES_RECURRENTES_EST_M'],
+    y=base_quanti['REVENU_EST_MM'],
+    mode='markers',
+    marker=dict(
+        color='FFBAD2',
+        line=dict(width=1)
     )
 )
 
