@@ -192,11 +192,11 @@ mat_corr = np.corrcoef(base_corr, rowvar=0) #matrice des correlations (pearson)
 names = list(base_corr.columns.values)
 mat_corr = pd.DataFrame(mat_corr, index=names, columns=names)
 #ajout des noms aux lignes et colonnes
-# Corr nb_contrats_depose mabanque = 0.12
-# Corr nb_contrats_depose cael = 0.08
+# Corr nb_contrats_depose mabanque = 0.14
+# Corr nb_contrats_depose cael = 0.13
 
-scipy.stats.spearmanr(base_quanti['Connexion_MaBanque_3m'], base_quanti2['nb_contrats_depose'])
-
+scipy.stats.spearmanr(base_quanti2['Connexion_MaBanque_3m'], base_quanti2['nb_contrats_depose'])
+scipy.stats.spearmanr(base_quanti2['Connexion_CAEL_3m'], base_quanti2['nb_contrats_depose'])
 
 #nuage de points entre var quanti
 
