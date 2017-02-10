@@ -21,7 +21,9 @@ import matplotlib.pyplot as plt
 import seaborn as sn
 import pylab
 from mpl_toolkits.mplot3d import Axes3D
-
+import scipy.stats as spstat
+import plotly
+from statsmodels.graphics.mosaicplot import mosaic
 
 # Definition du chemin où sont situées les données :
 PATH = 'C:/Users/Richard/Documents/GitHub/Segmentation-multicanale2/Données/v2'
@@ -175,7 +177,8 @@ for i in range(0, 39):
     sn.boxplot(x='cluster', y=var_names[i], data=clustered_data)
 
 
-
+    
+    
 
 ## Représentation dans le plan de l'ACP des clusters
 
@@ -206,6 +209,109 @@ plt.legend()
 plt.savefig('Plot_3_comp.png', dpi=600)
 
 
+
+
+
+
+# Essai plot 3D interactif
+import plotly.plotly as py
+import plotly.graph_objs as go
+import numpy as np
+from plotly.graph_objs import *
+plotly.tools.set_credentials_file(username='luciemallet', api_key='EchUlInyh3yStYnkmbhD')
+
+x1, y1, z1 =C[C[:, 10] == 0, 0], C[C[:, 10] == 0, 1], C[C[:, 10] == 0, 2]
+trace0 = go.Scatter3d(
+    x=x1,
+    y=y1,
+    z=z1,
+    mode='markers',
+    marker=dict(
+        color='blue',
+        size=5,
+        symbol='circle',
+        line=dict(
+            color='blue',
+            width=1
+        ),
+        opacity=0.8
+    )
+)
+
+x2, y2, z2 =C[C[:, 10] == 1, 0], C[C[:, 10] == 1, 1], C[C[:, 10] == 1, 2]
+trace1 = go.Scatter3d(
+    x=x2,
+    y=y2,
+    z=z2,
+    mode='markers',
+    marker=dict(
+        color='green',
+        size=5,
+        symbol='diamond',
+        line=dict(
+            color='green',
+            width=1
+        ),
+        opacity=0.8
+    )
+)
+        
+        
+x3, y3, z3 = C[C[:, 10] == 2, 0], C[C[:, 10] == 2, 1], C[C[:, 10] == 2, 2]
+trace2 = go.Scatter3d(
+    x=x3,
+    y=y3,
+    z=z3,
+    mode='markers',
+    marker=dict(
+        color='red',
+        size=5,
+        symbol='cross',
+        line=dict(
+            color='red',
+            width=1
+        ),
+        opacity=0.8
+    )
+)
+        
+x4, y4, z4 = C[C[:, 10] == 3, 0], C[C[:, 10] == 3, 1], C[C[:, 10] == 3, 2]
+trace3 = go.Scatter3d(
+    x=x4,
+    y=y4,
+    z=y4,
+    mode='markers',
+    marker=dict(
+        color='purple',
+        size=5,
+        symbol='triangle-up',
+        line=dict(
+            color='purple',
+            width=1
+        ),
+        opacity=0.8
+    )
+)
+        
+data = [trace0, trace1, trace2, trace3]
+layout = go.Layout(
+    margin=dict(
+        l=0,
+        r=0,
+        b=0,
+        t=0
+    ),
+    scene=Scene(
+        xaxis=XAxis(title='x axis title'),
+        yaxis=YAxis(title='y axis title'),
+        zaxis=ZAxis(title='z axis title')
+    )
+    )
+fig = go.Figure(data=data, layout=layout)
+py.iplot(fig, filename='simple-3d-scatter')
+
+
+
 # Creation des tops en ligne et depose
 clustered_data['top_enligne'] = np.where(clustered_data['nb_contrats_enligne'] == 0, 0, 1)
 clustered_data['top_depose'] = np.where(clustered_data['nb_contrats_depose'] == 0, 0, 1)
@@ -231,6 +337,7 @@ plt.savefig('TOP_par_clusters', dpi=600)
 
 
 
+
 # En résumé :
 
 # Pourcentage de TOP dans toute la base
@@ -242,4 +349,64 @@ mean_top_enligne * 100 # 0.01% pour cluster 1, 0.13% pour cluster 2, 1,3% pour c
 mean_top_depose * 100 # 0.17% pour cluster 1, 0.4% pour cluster 2, 9% pour cluster 3 et 4% pour cluster 4
 
 
-    
+
+
+
+
+# Import de la base quali pour mozaic plot
+base_quali = pd.read_table('C:/Users/Richard/Documents/GitHub/Segmentation-multicanale2/Données/base_variables_quali.txt', delimiter=";", dtype={"IDPART_CALCULE":object})
+base_quali2 = pd.concat([base_quali,clustered_data['top_enligne'],clustered_data['top_depose'],clustered_data['cluster']],axis=1)
+
+# Code pour mozaic (ne marche pas!!)
+#sub = list(range(1, 51, 1))
+#plt.figure(figsize=(10, 10))
+#var_names = list(base_quali2.columns.values)[1:51]
+#for i in range(0, 50):
+#    t=mosaic(base_quali2, ['cluster',var_names[i]])[0]
+#    plt.subplot(10, 5, sub[i])
+#    t
+
+
+mosaic(base_quali2, ['cluster','Connexion_CAELq'])
+mosaic(base_quali2, ['cluster','Connexion_MaBanqueq'])
+mosaic(base_quali2, ['cluster','ageq'])
+mosaic(base_quali2, ['cluster','dern_entrq'])
+
+mosaic(base_quali2, ['cluster','paiement_carteq'])
+mosaic(base_quali2, ['cluster','Agenceq'])
+mosaic(base_quali2, ['cluster','Actionsd_CAELq'])
+mosaic(base_quali2, ['cluster','virBAMq'])
+
+mosaic(base_quali2, ['cluster','Consult_Comptesq'])
+mosaic(base_quali2, ['cluster','revenuq'])
+mosaic(base_quali2, ['cluster','top_enligne'])
+mosaic(base_quali2, ['cluster','top_depose'])
+
+
+
+
+# Ajout de test du CHI2
+g, p, dof, expctd = spstat.chi2_contingency(pd.crosstab(clustered_data['top_enligne'],clustered_data['cluster']))
+p # Reject H0 : La distribution est différente en fonction des clusters
+g, p, dof, expctd = spstat.chi2_contingency(pd.crosstab(clustered_data['top_depose'],clustered_data['cluster']))
+p # Reject H0 : La distribution est différente en fonction des clusters
+g, p, dof, expctd = spstat.chi2_contingency(pd.crosstab(base_quali2['Connexion_CAELq'],base_quali2['cluster']))
+p # Reject H0 : La distribution est différente en fonction des clusters
+g, p, dof, expctd = spstat.chi2_contingency(pd.crosstab(base_quali2['Connexion_MaBanqueq'],base_quali2['cluster']))
+p # Reject H0 : La distribution est différente en fonction des clusters
+g, p, dof, expctd = spstat.chi2_contingency(pd.crosstab(base_quali2['ageq'],base_quali2['cluster']))
+p # Reject H0 : La distribution est différente en fonction des clusters
+g, p, dof, expctd = spstat.chi2_contingency(pd.crosstab(base_quali2['dern_entrq'],base_quali2['cluster']))
+p # Reject H0 : La distribution est différente en fonction des clusters
+g, p, dof, expctd = spstat.chi2_contingency(pd.crosstab(base_quali2['paiement_carteq'],base_quali2['cluster']))
+p # Reject H0 : La distribution est différente en fonction des clusters
+g, p, dof, expctd = spstat.chi2_contingency(pd.crosstab(base_quali2['Agenceq'],base_quali2['cluster']))
+p # Reject H0 : La distribution est différente en fonction des clusters
+g, p, dof, expctd = spstat.chi2_contingency(pd.crosstab(base_quali2['Actionsd_CAELq'],base_quali2['cluster']))
+p # Reject H0 : La distribution est différente en fonction des clusters
+g, p, dof, expctd = spstat.chi2_contingency(pd.crosstab(base_quali2['virBAMq'],base_quali2['cluster']))
+p # Reject H0 : La distribution est différente en fonction des clusters
+g, p, dof, expctd = spstat.chi2_contingency(pd.crosstab(base_quali2['Consult_Comptesq'],base_quali2['cluster']))
+p # Reject H0 : La distribution est différente en fonction des clusters
+g, p, dof, expctd = spstat.chi2_contingency(pd.crosstab(base_quali2['revenuq'],base_quali2['cluster']))
+p # Reject H0 : La distribution est différente en fonction des clusters
