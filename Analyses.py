@@ -78,7 +78,7 @@ plt.show()
 
 ## Nouvelle coordonnées
 score = pca.transform(data_scale)
-data_coor = pd.DataFrame(pca.transform(data_scale))
+data_coor = pd.DataFrame(score)
 data_coor.columns = ["Comp_" + str(l) for l in list(range(1, 40, 1))] # Renomer les colonnes
 
 ## Enregistrement des données data_coor pour programme kmeans_outliers

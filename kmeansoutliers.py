@@ -28,12 +28,19 @@ from statsmodels.graphics.mosaicplot import mosaic
 # Definition du chemin où sont situées les données :
 PATH = 'C:/Users/Richard/Documents/GitHub/Segmentation-multicanale2/Données/v2'
 
-# Import des données
-data_coor2 = pd.read_csv(PATH + '/PCA_coor2.csv', delimiter=",")
+## Import des données
+#coordonnees dans les composantes de l'ACP
+data_coor2 = pd.read_csv(PATH + '/PCA_coor2.csv', delimiter=",") 
+
+#base quanti ayant servi pour l'ACP
 quanti_trans = pd.read_csv(PATH + '/quanti_trans2.csv', delimiter=",", \
                            dtype={"IDPART_CALCULE":object})
 base_test2 = quanti_trans.drop(['IDPART_CALCULE', 'Actionsd_MaBanque_3m', \
-                                'Lecture_mess_3m', 'Ecriture_mess_3m'], 1)
+                                'Lecture_mess_3m', 'Ecriture_mess_3m'], 1) 
+
+#base quanti avant transformatioin des variables
+base_quanti = pd.read_csv(PATH + '/base_quanti.csv', delimiter=",", dtype={"IDPART_CALCULE":object})
+
 del quanti_trans, PATH
 
 # 1er k means
@@ -109,8 +116,8 @@ nv_centres = test.cluster_centers_
 
 # K means sur les centres avec 1 iteration sur toutes les observation
 kmeans = cluster.KMeans(n_clusters=len(centers3), max_iter=1, init=nv_centres)
-test = kmeans.fit(pd.DataFrame(np.array(data_coor3)))
-pred = kmeans.predict(pd.DataFrame(np.array(data_coor3)))
+test = kmeans.fit(data_coor3)
+pred = kmeans.predict(data_coor3)
 nv_centres_pr_cah = test.cluster_centers_
 del nv_centres
 
@@ -143,17 +150,19 @@ del hierar
 
 
 # Calcul des centroids de la CAH:
-centres_cah = pd.concat([pd.DataFrame(nv_centres_pr_cah), pd.DataFrame(groupes_cah)], axis=1)
+centres_cah = pd.concat([pd.DataFrame(nv_centres_pr_cah), pd.DataFrame(groupes_cah)], axis=1) 
 centres_cah.columns = ["Comp_" + str(l) for l in list(range(1, 11, 1))] + ['Cluster']
 centres_cah_mean = centres_cah.groupby('Cluster').mean()
 del centres_cah, nv_centres_pr_cah
 
 ## Dernier k-means avec initialisation des centres de la CAH
 kmeans = cluster.KMeans(n_clusters=4, max_iter=10000, init=centres_cah_mean)
-test = kmeans.fit(pd.DataFrame(np.array(data_coor3)))
-pred = kmeans.predict(pd.DataFrame(np.array(data_coor3)))
+test = kmeans.fit(data_coor3)
+pred = kmeans.predict(data_coor3)
 plt.hist(pred)
 del centres_cah_mean
+final_centers = test.cluster_centers_
+
 
 # Recuperation des variables initiales
 clustered_data = pd.concat([base_test2, pd.DataFrame(pred)], axis=1)
@@ -163,10 +172,13 @@ sum(pred == 1)
 sum(pred == 2)
 sum(pred == 3)
 
+clustered_data2 = pd.concat([base_quanti, pd.DataFrame(pred)], axis=1)
+clustered_data2 = clustered_data2.rename(columns={0: 'cluster'})
 
 
 # Premières analyses
 analyses_kmeans = clustered_data.groupby('cluster').mean()
+analyses_kmeans2 = clustered_data2.groupby('cluster').mean()
 
 # Code pour boxplots
 sub = list(range(1, 40, 1))
@@ -176,34 +188,82 @@ for i in range(0, 39):
     plt.subplot(8, 5, sub[i])
     sn.boxplot(x='cluster', y=var_names[i], data=clustered_data)
 
+# boxplots individuels pour présenter certains comportements
+sn.boxplot(x='cluster',y='age', data=clustered_data)
+sn.plt.suptitle("Distribution de l'age par classe")    
 
-    
-    
+sn.boxplot(x='cluster',y='nb_mois_dern_entr', data=clustered_data)
+sn.plt.suptitle("Nb de mois depuis le dernier entretien par classe")    
+
+#les familles (avec nb_partenaires >= 3) se retrouvent plutot dans les cluster 1 et 3
+#en effet, les inactifs et retraites sont plutot seuls ou à 2 (0 mineurs dans le CC)  
+sn.boxplot(x='cluster',y='nb_partenaires_CC', data=clustered_data)
+sn.boxplot(x='cluster',y='nb_mineurs_CC', data=clustered_data)
+
+pd.crosstab(clustered_data['cluster'],clustered_data['nb_partenaires_CC'])
+pd.crosstab(clustered_data['cluster'],clustered_data['nb_mineurs_CC'])
+
+# Connexion CAEL
+#avec les donnees transformees
+sn.boxplot(x='cluster',y='Connexion_CAEL_3m', data=clustered_data)
+sn.plt.suptitle("Nb de connexions à CAEL sur les 3 derniers mois par classe")    
+
+#avec les donnees initiales 
+ax=sn.boxplot(x='cluster',y='Connexion_CAEL_3m', data=clustered_data2, showmeans=True)
+ax.set(ylim=(0, 100))
+sn.plt.suptitle("Nb de connexions à CAEL sur les 3 derniers mois par classe")    
+
+# Connexion MaBanque 
+#avec les donnees transformees
+sn.boxplot(x='cluster',y='Connexion_MaBanque_3m', data=clustered_data)
+sn.plt.suptitle("Nb de connexions à Ma Banque sur les 3 derniers mois par classe")    
+
+#avec les donnees initiales 
+ax=sn.boxplot(x='cluster',y='Connexion_MaBanque_3m', data=clustered_data2, showmeans=True)
+ax.set(ylim=(0, 65))
+sn.plt.suptitle("Nb de connexions à Ma Banque sur les 3 derniers mois par classe")    
+
+# nb paiement par carte -> la classe des retraites en effectue le -
+sn.boxplot(x='cluster',y='nb_paiement_carte_3m', data=clustered_data)
+sn.plt.suptitle("Nb de paiements par carte sur les 3 derniers mois par classe")    
+
+# Montant operation depot pour montrer le peu d'activite sur le compte de la classe des "inactifs" 
+#avec les donnees transformees
+sn.boxplot(x='cluster',y='MT_OPERATION_DEPOT_3m', data=clustered_data)
+sn.plt.suptitle("Mt des operations de depot sur les 3 derniers mois par classe")    
+
+#avec les donnees initiales 
+ax=sn.boxplot(x='cluster',y='MT_OPERATION_DEPOT_3m', data=clustered_data2, showmeans=True)
+ax.set(ylim=(0, 60000))
+sn.plt.suptitle("Mt des operations de depot sur les 3 derniers mois par classe")    
+
+
+
+
 
 ## Représentation dans le plan de l'ACP des clusters
 
 # Base acp avec les clusters
-C = np.array(pd.concat([pd.DataFrame(np.array(data_coor3)), \
-                                     clustered_data['cluster']], axis=1))
+C = np.array(pd.concat([data_coor3, clustered_data['cluster']], axis=1))
 
 
 # PLOT 3D
 fig = plt.figure(1, figsize=(8, 6))
 ax = Axes3D(fig, elev=-150, azim=110)
-ax.scatter(C[C[:, 10] == 0, 0], C[C[:, 10] == 0, 1], C[C[:, 10] == 0, 2], \
-           c='royalblue', cmap=plt.cm.Paired, label='Groupe 1 (Inactifs)')
-ax.scatter(C[C[:, 10] == 1, 0], C[C[:, 10] == 1, 1], C[C[:, 10] == 1, 2], \
-           c='forestgreen', cmap=plt.cm.Paired, label='Groupe 2 (Retraités)')
-ax.scatter(C[C[:, 10] == 2, 0], C[C[:, 10] == 2, 1], C[C[:, 10] == 2, 2], \
-           c='firebrick', cmap=plt.cm.Paired, label='Groupe 3 (CAEL)')
-ax.scatter(C[C[:, 10] == 3, 0], C[C[:, 10] == 3, 1], C[C[:, 10] == 3, 2], \
-           c='slateblue', cmap=plt.cm.Paired, label='Groupe 4 (Ma Banque)')
-ax.set_title("Représentation des partenaires \n dans la segmentation")
-ax.set_xlabel("\n Composante 1 \n Activité -- Inactivité")
+ax.scatter(C[C[:, 10] == 0, 2], C[C[:, 10] == 0, 0], C[C[:, 10] == 0, 1], \
+           c='royalblue', cmap=plt.cm.Paired, label='Classe 1 (Inactifs)')
+ax.scatter(C[C[:, 10] == 1, 2], C[C[:, 10] == 1, 0], C[C[:, 10] == 1, 1], \
+           c='forestgreen', cmap=plt.cm.Paired, label='Classe 2 (CAEL)')
+ax.scatter(C[C[:, 10] == 2, 2], C[C[:, 10] == 2, 0], C[C[:, 10] == 2, 1], \
+           c='firebrick', cmap=plt.cm.Paired, label='Classe 3 (Retraites)')
+ax.scatter(C[C[:, 10] == 3, 2], C[C[:, 10] == 3, 0], C[C[:, 10] == 3, 1], \
+           c='slateblue', cmap=plt.cm.Paired, label='Classe 4 (Ma Banque)')
+ax.set_title("Représentation des classes d'invididus")
+ax.set_xlabel("\n Composante 3 \n CAEL -- MA Banque")
 #ax.w_xaxis.set_ticklabels([])
-ax.set_ylabel("\n Composante 2 \n Jeunes -- Agés")
+ax.set_ylabel("\n Composante 1 \n Activité -- Inactivité")
 #ax.w_yaxis.set_ticklabels([])
-ax.set_zlabel("Composante 3 \n MA Banque -- CAEL")
+ax.set_zlabel("\n Composante 2 \n Agés -- Jeunes")
 #ax.w_zaxis.set_ticklabels([])
 plt.legend()
 plt.savefig('Plot_3_comp.png', dpi=600)
@@ -221,7 +281,7 @@ from plotly.graph_objs import *
 plotly.tools.set_credentials_file(username='luciemallet', api_key='EchUlInyh3yStYnkmbhD')
 
 x1, y1, z1 =C[C[:, 10] == 0, 0], C[C[:, 10] == 0, 1], C[C[:, 10] == 0, 2]
-trace0 = go.Scatter3d(
+Classe1 = go.Scatter3d(
     x=x1,
     y=y1,
     z=z1,
@@ -235,11 +295,11 @@ trace0 = go.Scatter3d(
             width=1
         ),
         opacity=0.8
-    )
+    ), name='Classe 1 (Inactifs)'
 )
 
 x2, y2, z2 =C[C[:, 10] == 1, 0], C[C[:, 10] == 1, 1], C[C[:, 10] == 1, 2]
-trace1 = go.Scatter3d(
+Classe2 = go.Scatter3d(
     x=x2,
     y=y2,
     z=z2,
@@ -253,12 +313,12 @@ trace1 = go.Scatter3d(
             width=1
         ),
         opacity=0.8
-    )
+    ), name='Classe 2 (CAEL)'
 )
         
         
 x3, y3, z3 = C[C[:, 10] == 2, 0], C[C[:, 10] == 2, 1], C[C[:, 10] == 2, 2]
-trace2 = go.Scatter3d(
+Classe3 = go.Scatter3d(
     x=x3,
     y=y3,
     z=z3,
@@ -272,11 +332,11 @@ trace2 = go.Scatter3d(
             width=1
         ),
         opacity=0.8
-    )
+    ), name='Classe 3 (Retraités)'
 )
         
 x4, y4, z4 = C[C[:, 10] == 3, 0], C[C[:, 10] == 3, 1], C[C[:, 10] == 3, 2]
-trace3 = go.Scatter3d(
+Classe4 = go.Scatter3d(
     x=x4,
     y=y4,
     z=y4,
@@ -290,10 +350,10 @@ trace3 = go.Scatter3d(
             width=1
         ),
         opacity=0.8
-    )
+    ), name='Classe 4 (Ma Banque)'
 )
         
-data = [trace0, trace1, trace2, trace3]
+data = [Classe1, Classe2, Classe3, Classe4]
 layout = go.Layout(
     margin=dict(
         l=0,
@@ -302,9 +362,9 @@ layout = go.Layout(
         t=0
     ),
     scene=Scene(
-        xaxis=XAxis(title='x axis title'),
-        yaxis=YAxis(title='y axis title'),
-        zaxis=ZAxis(title='z axis title')
+        xaxis=XAxis(title='Comp 1 - Activité'),
+        yaxis=YAxis(title='Comp 2 - Age'),
+        zaxis=ZAxis(title='Comp 3 - CAEL vs Ma Banque ')
     )
     )
 fig = go.Figure(data=data, layout=layout)
@@ -330,7 +390,7 @@ r2 = [x + barWidth for x in r1]
 plt.bar(r1, y1, width=barWidth, color=['yellow' for i in y1], label='Top depose')
 plt.bar(r2, y2, width=barWidth, color=['pink' for i in y1], label='Top en ligne')
 plt.xticks([r + barWidth for r in range(len(y1))], ['Cluster 1 (Inactifs)', \
-'Cluster 2 (Retraités)', 'Cluster 3 (CAEL)', 'Cluster 4 (MB)'])
+'Cluster 2 (CAEL)', 'Cluster 3 (Retraités)', 'Cluster 4 (Ma Banque)'])
 plt.suptitle('Nb moyen de Top en ligne et Top depose par cluster')
 plt.legend()
 plt.savefig('TOP_par_clusters', dpi=600)
@@ -382,10 +442,51 @@ mosaic(base_quali2, ['cluster','revenuq'])
 mosaic(base_quali2, ['cluster','top_enligne'])
 mosaic(base_quali2, ['cluster','top_depose'])
 
+#au final je trouve les boxplot plus lisibles que les mosaic plot
+#quelques variables quali interessantes :
+mosaic(base_quali2, ['cluster','libpcs2'])
+mosaic(base_quali2, ['cluster','lncsg2'])
+mosaic(base_quali2, ['cluster','type_famille'])
+
+# csp par cluster
+ctab = pd.crosstab(base_quali2['cluster'],base_quali2['libpcs2']).apply(lambda x: x/x.sum(), axis=1)
+
+ct=ctab.plot( kind='bar', stacked=True, title='Categories socio-professionnelles en proportion par classe')
+lgd=ct.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+ct.set_ylabel('Proportion')
+ct.set_xlabel('Classe')
+ct.set_xticklabels(ctab.index+1, rotation=0) 
+plt.savefig('lipcs par cluster.png',  bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=600)
+
+# segmentation distri par cluster
+ctab = pd.crosstab(base_quali2['cluster'],base_quali2['lncsg2']).apply(lambda x: x/x.sum(), axis=1)
+
+ct=ctab.plot( kind='bar', stacked=True, title='Segmentation en proportion par classe')
+lgd=ct.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+ct.set_ylabel('Proportion')
+ct.set_xlabel('Classe')
+ct.set_xticklabels(ctab.index+1, rotation=0) 
+plt.savefig('lncsg par cluster.png',  bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=600)
+
+
+# type famille par cluster 
+ctab = pd.crosstab(base_quali2['cluster'],base_quali2['type_famille']).apply(lambda x: x/x.sum(), axis=1)
+
+ct=ctab.plot( kind='bar', stacked=True, title='Type de famille en proportion par classe')
+lgd=ct.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+ct.set_ylabel('Proportion')
+ct.set_xlabel('Classe')
+ct.set_xticklabels(ctab.index+1, rotation=0) 
+plt.savefig('type famille par cluster.png',  bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=600)
+
+
+
+
 
 
 
 # Ajout de test du CHI2
+#H0  : independance entre les 2 variables considerees 
 g, p, dof, expctd = spstat.chi2_contingency(pd.crosstab(clustered_data['top_enligne'],clustered_data['cluster']))
 p # Reject H0 : La distribution est différente en fonction des clusters
 g, p, dof, expctd = spstat.chi2_contingency(pd.crosstab(clustered_data['top_depose'],clustered_data['cluster']))
@@ -410,3 +511,10 @@ g, p, dof, expctd = spstat.chi2_contingency(pd.crosstab(base_quali2['Consult_Com
 p # Reject H0 : La distribution est différente en fonction des clusters
 g, p, dof, expctd = spstat.chi2_contingency(pd.crosstab(base_quali2['revenuq'],base_quali2['cluster']))
 p # Reject H0 : La distribution est différente en fonction des clusters
+
+g, p, dof, expctd = spstat.chi2_contingency(pd.crosstab(base_quali2['libsexe'],base_quali2['cluster']))
+p # p < 0.05, on rejette H0 
+expctd
+g, p, dof, expctd = spstat.chi2_contingency(pd.crosstab(base_quali2['libcaju2'],base_quali2['cluster']))
+p # p < 0.05, on rejette H0 
+
