@@ -134,7 +134,8 @@ base_quanti = df_quanti.drop(var_drop, axis=1)   # Drop les variables qu'on ne v
 
 del(df, df_quanti, i, sub_1m, sub_2m, types, var, var_drop, var_names, x)
 
-
+##Sauvegarde intermediaire de la table des var quanti avant transformation 
+base_quanti.to_csv(path + '/base_quanti.csv', index=False)
 
 ### Recoder les variables comme dans le code SAS (transformations monotones)
 base_quanti2 = base_quanti.copy()
