@@ -38,7 +38,7 @@ quanti_trans = pd.read_csv(PATH + '/quanti_trans2.csv', delimiter=",", \
 base_test2 = quanti_trans.drop(['IDPART_CALCULE', 'Actionsd_MaBanque_3m', \
                                 'Lecture_mess_3m', 'Ecriture_mess_3m'], 1) 
 
-#base quanti avant transformatioin des variables
+#base quanti avant transformation des variables
 base_quanti = pd.read_csv(PATH + '/base_quanti.csv', delimiter=",", dtype={"IDPART_CALCULE":object})
 
 del quanti_trans, PATH
@@ -159,21 +159,39 @@ del centres_cah, nv_centres_pr_cah
 kmeans = cluster.KMeans(n_clusters=4, max_iter=10000, init=centres_cah_mean)
 test = kmeans.fit(data_coor3)
 pred = kmeans.predict(data_coor3)
-plt.hist(pred)
 del centres_cah_mean
 final_centers = test.cluster_centers_
+
+#sauvegarde des clusters obtenus 
+pd.DataFrame(pred).to_csv(PATH + '/clusters.csv', index=False)
+
+# frequence des clusters
+count=pd.DataFrame(pred+1)[0].value_counts(sort=False)
+count2=pd.DataFrame(count)
+
+# now to plot the figure...
+plt.figure(figsize=(12, 8))
+ax = count.plot(kind='bar')
+ax.set_title("Nb d'individus par classe")
+ax.set_xlabel("Classe")
+ax.set_ylabel("Nb d'individus")
+rects = ax.patches
+# Now make some labels
+labels = [count2.iat[i,0] for i in range(len(rects))] 
+for rect, label in zip(rects, labels):
+    height = rect.get_height()
+    ax.text(rect.get_x() + rect.get_width()/2, height + 5, label, ha='center', va='bottom')
+plt.savefig('frequence clusters.png', dpi=600) 
 
 
 # Recuperation des variables initiales
 clustered_data = pd.concat([base_test2, pd.DataFrame(pred)], axis=1)
 clustered_data = clustered_data.rename(columns={0: 'cluster'})
-sum(pred == 0)
-sum(pred == 1)
-sum(pred == 2)
-sum(pred == 3)
+clustered_data['cluster']=clustered_data['cluster']+1
 
 clustered_data2 = pd.concat([base_quanti, pd.DataFrame(pred)], axis=1)
 clustered_data2 = clustered_data2.rename(columns={0: 'cluster'})
+clustered_data2['cluster']=clustered_data2['cluster']+1
 
 
 # Premières analyses
@@ -190,10 +208,12 @@ for i in range(0, 39):
 
 # boxplots individuels pour présenter certains comportements
 sn.boxplot(x='cluster',y='age', data=clustered_data)
-sn.plt.suptitle("Distribution de l'age par classe")    
+sn.plt.suptitle("Distribution de l'age par classe")   
+plt.savefig('distrib age par classe.png', dpi=600) 
 
 sn.boxplot(x='cluster',y='nb_mois_dern_entr', data=clustered_data)
 sn.plt.suptitle("Nb de mois depuis le dernier entretien par classe")    
+plt.savefig('distrib nb_mois_dern_entr par classe.png', dpi=600) 
 
 #les familles (avec nb_partenaires >= 3) se retrouvent plutot dans les cluster 1 et 3
 #en effet, les inactifs et retraites sont plutot seuls ou à 2 (0 mineurs dans le CC)  
@@ -212,6 +232,7 @@ sn.plt.suptitle("Nb de connexions à CAEL sur les 3 derniers mois par classe")
 ax=sn.boxplot(x='cluster',y='Connexion_CAEL_3m', data=clustered_data2, showmeans=True)
 ax.set(ylim=(0, 100))
 sn.plt.suptitle("Nb de connexions à CAEL sur les 3 derniers mois par classe")    
+plt.savefig('distrib Connexion_CAEL par classe.png', dpi=600) 
 
 # Connexion MaBanque 
 #avec les donnees transformees
@@ -222,20 +243,35 @@ sn.plt.suptitle("Nb de connexions à Ma Banque sur les 3 derniers mois par class
 ax=sn.boxplot(x='cluster',y='Connexion_MaBanque_3m', data=clustered_data2, showmeans=True)
 ax.set(ylim=(0, 65))
 sn.plt.suptitle("Nb de connexions à Ma Banque sur les 3 derniers mois par classe")    
+plt.savefig('distrib Connexion_MaBanque par classe.png', dpi=600) 
 
 # nb paiement par carte -> la classe des retraites en effectue le -
 sn.boxplot(x='cluster',y='nb_paiement_carte_3m', data=clustered_data)
-sn.plt.suptitle("Nb de paiements par carte sur les 3 derniers mois par classe")    
+sn.plt.suptitle("Nb de paiements par carte sur les 3 derniers mois par classe")  
+plt.savefig('distrib nb_paiement_carte par classe.png', dpi=600)   
 
 # Montant operation depot pour montrer le peu d'activite sur le compte de la classe des "inactifs" 
 #avec les donnees transformees
 sn.boxplot(x='cluster',y='MT_OPERATION_DEPOT_3m', data=clustered_data)
-sn.plt.suptitle("Mt des operations de depot sur les 3 derniers mois par classe")    
+sn.plt.suptitle("Mt des operations de depot sur les 3 derniers mois par classe")  
 
 #avec les donnees initiales 
 ax=sn.boxplot(x='cluster',y='MT_OPERATION_DEPOT_3m', data=clustered_data2, showmeans=True)
 ax.set(ylim=(0, 60000))
-sn.plt.suptitle("Mt des operations de depot sur les 3 derniers mois par classe")    
+sn.plt.suptitle("Mt des operations de depot sur les 3 derniers mois par classe")  
+plt.savefig('distrib mt_operation_depot par classe.png', dpi=600)     
+
+# Agence : le seul contact que possede la classe des retraites
+#avec les donnees transformees
+sn.boxplot(x='cluster',y='Agence_3m', data=clustered_data)
+sn.plt.suptitle("Nb de contacts agence sur les 3 derniers mois par classe")  
+
+#avec les donnees initiales 
+ax=sn.boxplot(x='cluster',y='Agence_3m', data=clustered_data2, showmeans=True)
+ax.set(ylim=(0, 20))
+sn.plt.suptitle("Nb de contacts agence sur les 3 derniers mois par classe")  
+plt.savefig('distrib agence par classe.png', dpi=600)     
+
 
 
 
@@ -250,14 +286,14 @@ C = np.array(pd.concat([data_coor3, clustered_data['cluster']], axis=1))
 # PLOT 3D
 fig = plt.figure(1, figsize=(8, 6))
 ax = Axes3D(fig, elev=-150, azim=110)
-ax.scatter(C[C[:, 10] == 0, 2], C[C[:, 10] == 0, 0], C[C[:, 10] == 0, 1], \
-           c='royalblue', cmap=plt.cm.Paired, label='Classe 1 (Inactifs)')
 ax.scatter(C[C[:, 10] == 1, 2], C[C[:, 10] == 1, 0], C[C[:, 10] == 1, 1], \
-           c='forestgreen', cmap=plt.cm.Paired, label='Classe 2 (CAEL)')
+           c='royalblue', cmap=plt.cm.Paired, label='Classe 1 (Inactifs)')
 ax.scatter(C[C[:, 10] == 2, 2], C[C[:, 10] == 2, 0], C[C[:, 10] == 2, 1], \
-           c='firebrick', cmap=plt.cm.Paired, label='Classe 3 (Retraites)')
+           c='forestgreen', cmap=plt.cm.Paired, label='Classe 2 (Retraites)')
 ax.scatter(C[C[:, 10] == 3, 2], C[C[:, 10] == 3, 0], C[C[:, 10] == 3, 1], \
-           c='slateblue', cmap=plt.cm.Paired, label='Classe 4 (Ma Banque)')
+           c='firebrick', cmap=plt.cm.Paired, label='Classe 3 (Ma Banque)')
+ax.scatter(C[C[:, 10] == 4, 2], C[C[:, 10] == 4, 0], C[C[:, 10] == 4, 1], \
+           c='slateblue', cmap=plt.cm.Paired, label='Classe 4 (CAEL)')
 ax.set_title("Représentation des classes d'invididus")
 ax.set_xlabel("\n Composante 3 \n CAEL -- MA Banque")
 #ax.w_xaxis.set_ticklabels([])
@@ -266,7 +302,7 @@ ax.set_ylabel("\n Composante 1 \n Activité -- Inactivité")
 ax.set_zlabel("\n Composante 2 \n Agés -- Jeunes")
 #ax.w_zaxis.set_ticklabels([])
 plt.legend()
-plt.savefig('Plot_3_comp.png', dpi=600)
+plt.savefig('Plot_3_comp2.png', dpi=600)
 
 
 
@@ -280,7 +316,7 @@ import numpy as np
 from plotly.graph_objs import *
 plotly.tools.set_credentials_file(username='luciemallet', api_key='EchUlInyh3yStYnkmbhD')
 
-x1, y1, z1 =C[C[:, 10] == 0, 0], C[C[:, 10] == 0, 1], C[C[:, 10] == 0, 2]
+x1, y1, z1 =C[C[:, 10] == 1, 0], C[C[:, 10] == 1, 1], C[C[:, 10] == 1, 2]
 Classe1 = go.Scatter3d(
     x=x1,
     y=y1,
@@ -298,7 +334,7 @@ Classe1 = go.Scatter3d(
     ), name='Classe 1 (Inactifs)'
 )
 
-x2, y2, z2 =C[C[:, 10] == 1, 0], C[C[:, 10] == 1, 1], C[C[:, 10] == 1, 2]
+x2, y2, z2 =C[C[:, 10] == 2, 0], C[C[:, 10] == 2, 1], C[C[:, 10] == 2, 2]
 Classe2 = go.Scatter3d(
     x=x2,
     y=y2,
@@ -313,11 +349,11 @@ Classe2 = go.Scatter3d(
             width=1
         ),
         opacity=0.8
-    ), name='Classe 2 (CAEL)'
+    ), name='Classe 2 (Retraités)'
 )
         
         
-x3, y3, z3 = C[C[:, 10] == 2, 0], C[C[:, 10] == 2, 1], C[C[:, 10] == 2, 2]
+x3, y3, z3 = C[C[:, 10] == 3, 0], C[C[:, 10] == 3, 1], C[C[:, 10] == 3, 2]
 Classe3 = go.Scatter3d(
     x=x3,
     y=y3,
@@ -332,10 +368,10 @@ Classe3 = go.Scatter3d(
             width=1
         ),
         opacity=0.8
-    ), name='Classe 3 (Retraités)'
+    ), name='Classe 3 (Ma Banque)'
 )
         
-x4, y4, z4 = C[C[:, 10] == 3, 0], C[C[:, 10] == 3, 1], C[C[:, 10] == 3, 2]
+x4, y4, z4 = C[C[:, 10] == 4, 0], C[C[:, 10] == 4, 1], C[C[:, 10] == 4, 2]
 Classe4 = go.Scatter3d(
     x=x4,
     y=y4,
@@ -350,7 +386,7 @@ Classe4 = go.Scatter3d(
             width=1
         ),
         opacity=0.8
-    ), name='Classe 4 (Ma Banque)'
+    ), name='Classe 4 (CAEL)'
 )
         
 data = [Classe1, Classe2, Classe3, Classe4]
@@ -387,12 +423,12 @@ y2 = mean_top_enligne
 r1 = range(len(y1))
 r2 = [x + barWidth for x in r1]
 
-plt.bar(r1, y1, width=barWidth, color=['yellow' for i in y1], label='Top depose')
-plt.bar(r2, y2, width=barWidth, color=['pink' for i in y1], label='Top en ligne')
+plt.bar(r1, y1, width=barWidth, color=['yellow' for i in y1], label='depose')
+plt.bar(r2, y2, width=barWidth, color=['pink' for i in y1], label='en ligne')
 plt.xticks([r + barWidth for r in range(len(y1))], ['Cluster 1 (Inactifs)', \
-'Cluster 2 (CAEL)', 'Cluster 3 (Retraités)', 'Cluster 4 (Ma Banque)'])
-plt.suptitle('Nb moyen de Top en ligne et Top depose par cluster')
-plt.legend()
+'Cluster 2 (Retraités)', 'Cluster 3 (Ma Banque)', 'Cluster 4 (CAEL)'])
+plt.suptitle('Proportion de clients ayant souscrits par depose ou en ligne par classe')
+plt.legend(loc=2)
 plt.savefig('TOP_par_clusters', dpi=600)
 
 
@@ -455,7 +491,7 @@ ct=ctab.plot( kind='bar', stacked=True, title='Categories socio-professionnelles
 lgd=ct.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 ct.set_ylabel('Proportion')
 ct.set_xlabel('Classe')
-ct.set_xticklabels(ctab.index+1, rotation=0) 
+ct.set_xticklabels(ctab.index, rotation=0) 
 plt.savefig('lipcs par cluster.png',  bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=600)
 
 # segmentation distri par cluster
@@ -465,7 +501,7 @@ ct=ctab.plot( kind='bar', stacked=True, title='Segmentation en proportion par cl
 lgd=ct.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 ct.set_ylabel('Proportion')
 ct.set_xlabel('Classe')
-ct.set_xticklabels(ctab.index+1, rotation=0) 
+ct.set_xticklabels(ctab.index, rotation=0) 
 plt.savefig('lncsg par cluster.png',  bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=600)
 
 
@@ -476,7 +512,7 @@ ct=ctab.plot( kind='bar', stacked=True, title='Type de famille en proportion par
 lgd=ct.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 ct.set_ylabel('Proportion')
 ct.set_xlabel('Classe')
-ct.set_xticklabels(ctab.index+1, rotation=0) 
+ct.set_xticklabels(ctab.index, rotation=0) 
 plt.savefig('type famille par cluster.png',  bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=600)
 
 
