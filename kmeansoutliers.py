@@ -41,7 +41,7 @@ base_test2 = quanti_trans.drop(['IDPART_CALCULE', 'Actionsd_MaBanque_3m', \
 #base quanti avant transformation des variables
 base_quanti = pd.read_csv(PATH + '/base_quanti.csv', delimiter=",", dtype={"IDPART_CALCULE":object})
 
-del quanti_trans, PATH
+del quanti_trans
 
 # 1er k means
 #on retient les 10 premieres composantes
@@ -162,8 +162,14 @@ pred = kmeans.predict(data_coor3)
 del centres_cah_mean
 final_centers = test.cluster_centers_
 
+
 #sauvegarde des clusters obtenus 
 pd.DataFrame(pred).to_csv(PATH + '/clusters.csv', index=False)
+
+
+pred = pd.read_csv(PATH + '/clusters.csv', delimiter=",") 
+
+
 
 # frequence des clusters
 count=pd.DataFrame(pred+1)[0].value_counts(sort=False)
@@ -186,13 +192,58 @@ plt.savefig('frequence clusters.png', dpi=600)
 
 # Recuperation des variables initiales
 clustered_data = pd.concat([base_test2, pd.DataFrame(pred)], axis=1)
-clustered_data = clustered_data.rename(columns={0: 'cluster'})
+clustered_data = clustered_data.rename(columns={0: 'cluster'}) # Attention au type du nom de cluster
 clustered_data['cluster']=clustered_data['cluster']+1
 
+
+
 clustered_data2 = pd.concat([base_quanti, pd.DataFrame(pred)], axis=1)
-clustered_data2 = clustered_data2.rename(columns={0: 'cluster'})
+clustered_data2 = clustered_data2.rename(columns={'0': 'cluster'})
 clustered_data2['cluster']=clustered_data2['cluster']+1
 
+####### Ajout comparaison historique
+base_juin = pd.read_csv('C:/Users/Richard/Documents/GitHub/Segmentation-multicanale2/Données/Historique 3 mois/quanti_trans2juin.csv', delimiter=",") 
+base_juin = base_juin.drop(['IDPART_CALCULE', 'Actionsd_MaBanque_3m', 'Lecture_mess_3m',
+                               'Ecriture_mess_3m'], axis=1)
+# Centres quanti
+centres_quanti = clustered_data.groupby('cluster').mean()
+# Pred Juin : 
+kmeans = cluster.KMeans(n_clusters=4, max_iter=1, init=centres_quanti)
+test = kmeans.fit(base_juin)
+pred_juin = kmeans.predict(base_juin)
+
+# Comparaison des prediction
+pred_compare = pd.concat([pd.DataFrame(pred),pd.DataFrame(pred_juin)],axis=1)
+
+pred_compare = pd.DataFrame({'sept': pred, 'juin': pred_juin})
+pd.crosstab(pred_compare['sept']+1,pred_compare['juin']+1)
+
+base_juin2 = pd.concat([base_juin, pd.DataFrame(pred_juin)],axis= 1)
+base_juin2 = base_juin.rename(columns={0: 'cluster'})
+
+test_dist = vq(base_juin, centres_quanti)
+plus_proche = test_dist[0] # distance de chaque observation au cluster le plus proche.
+
+pred_compare2 = pd.concat([pred_compare,pd.DataFrame(plus_proche)],axis=1)
+pred_compare2 = pred_compare2.rename(columns={0: 'juindistance'})
+pd.crosstab(pred_compare2['juin']+1,pred_compare2['juindistance']+1)
+pd.crosstab(pred_compare2['sept']+1,pred_compare2['juindistance']+1)
+
+
+# Boxplot nouvelle pred
+sub = list(range(1, 40, 1))
+plt.figure(figsize=(40, 40))
+var_names = list(base_juin2.columns.values)[0:39]
+for i in range(0, 39):
+    plt.subplot(8, 5, sub[i])
+    sn.boxplot(x='cluster', y=var_names[i], data=base_juin2)
+
+
+    
+    
+
+    
+    
 
 # Premières analyses
 analyses_kmeans = clustered_data.groupby('cluster').mean()
@@ -242,7 +293,7 @@ sn.plt.suptitle("Nb de connexions à Ma Banque sur les 3 derniers mois par class
 #avec les donnees initiales 
 ax=sn.boxplot(x='cluster',y='Connexion_MaBanque_3m', data=clustered_data2, showmeans=True)
 ax.set(ylim=(0, 65))
-sn.plt.suptitle("Nb de connexions à Ma Banque sur les 3 derniers mois par classe")    
+sn.plt.suptitle("Nb de connexions à Ma Banque sur les 3 derniers mois par classe")
 plt.savefig('distrib Connexion_MaBanque par classe.png', dpi=600) 
 
 # nb paiement par carte -> la classe des retraites en effectue le -
@@ -517,8 +568,92 @@ plt.savefig('type famille par cluster.png',  bbox_extra_artists=(lgd,), bbox_inc
 
 
 
+# optin sms par cluster 
+ctab = pd.crosstab(base_quali2['cluster'],base_quali2['optin_sms']).apply(lambda x: x/x.sum(), axis=1)
+
+ct=ctab.plot( kind='bar', stacked=True, title='Optin sms par classe')
+lgd=ct.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+ct.set_ylabel('Proportion')
+ct.set_xlabel('Classe')
+ct.set_xticklabels(ctab.index, rotation=0) 
+plt.savefig('optin_sms.png',  bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=600)
 
 
+# optin mail par cluster 
+ctab = pd.crosstab(base_quali2['cluster'],base_quali2['optin_mail']).apply(lambda x: x/x.sum(), axis=1)
+
+ct=ctab.plot( kind='bar', stacked=True, title='Optin email par classe')
+lgd=ct.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+ct.set_ylabel('Proportion')
+ct.set_xlabel('Classe')
+ct.set_xticklabels(ctab.index, rotation=0) 
+plt.savefig('optin_mail.png',  bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=600)
+
+# Verification des optin sms + mail : les mêmes ?
+optin2 = pd.crosstab(base_quali2['optin_sms'].where(base_quali2['cluster']==2),base_quali2['optin_mail'].where(base_quali2['cluster']==2))
+optin3 = pd.crosstab(base_quali2['optin_sms'].where(base_quali2['cluster']==3),base_quali2['optin_mail'].where(base_quali2['cluster']==3))
+optin4 = pd.crosstab(base_quali2['optin_sms'].where(base_quali2['cluster']==4),base_quali2['optin_mail'].where(base_quali2['cluster']==4))
+np.sum(optin4)
+base_quali2['optin_sms'].where(base_quali2['cluster']==3).value_counts()
+base_quali2['cluster'].value_counts()
+
+# Optin mail et sms par clusters
+# Cluster 4 : CAEL
+ctab = pd.concat([base_quali2['optin_mail'].where(base_quali2['cluster']==4).value_counts(),base_quali2['optin_sms'].where(base_quali2['cluster']==4).value_counts()],axis=1).apply(lambda x: x/x.sum(), axis=0)
+ctab = ctab.transpose()
+ctab = pd.concat([ctab['NC'],ctab['OUI'],ctab['NON']],axis=1)
+ct=ctab.plot( kind='bar', stacked=True, title="Proportion d'Optin/Optout pour le cluster 4 (CAEL)")
+lgd=ct.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+ct.set_ylabel('Proportion')
+#ct.set_xlabel('Classe')
+ct.set_xticklabels(ctab.index, rotation=0) 
+plt.savefig('optin_cluster4.png',bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=600)
+# Pie chart
+optoutmail = optin4.iloc[:,1]
+optoutmail = pd.DataFrame(optoutmail).transpose()
+optoutmail = pd.concat([optoutmail['NC'],optoutmail['OUI'],optoutmail['NON']],axis=1)
+optoutmail = pd.Series(optoutmail.transpose().iloc[:,0])
+ct=optoutmail.plot( kind='pie', autopct='%.0f',title="Proportion d'Optin/Optout sms parmi les Optout mail \n pour le cluster 4 (CAEL)")
+ct.set_ylabel('')
+plt.savefig('optin_cluster4pie.png',bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=600)
+
+# Cluster 3 : Ma banque
+ctab = pd.concat([base_quali2['optin_sms'].where(base_quali2['cluster']==3).value_counts(),base_quali2['optin_mail'].where(base_quali2['cluster']==3).value_counts()],axis=1).apply(lambda x: x/x.sum(), axis=0)
+ctab = ctab.transpose()
+ctab = pd.concat([ctab['NC'],ctab['OUI'],ctab['NON']],axis=1)
+ct=ctab.plot( kind='bar', stacked=True, title="Proportion d'Optin/Optout pour le cluster 3 (Ma Banque)")
+lgd=ct.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+ct.set_ylabel('Proportion')
+#ct.set_xlabel('Classe')
+ct.set_xticklabels(ctab.index, rotation=0) 
+plt.savefig('optin_cluster3.png',bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=600)
+# Pie chart
+optoutsms = optin3.iloc[1,:]
+optoutsms = pd.DataFrame(optoutsms).transpose()
+optoutsms = pd.concat([optoutsms['NC'],optoutsms['OUI'],optoutsms['NON']],axis=1)
+optoutsms = pd.Series(optoutsms.transpose().iloc[:,0])
+ct=optoutsms.plot( kind='pie',autopct='%.0f', title="Proportion d'Optin/Optout mail parmi les Optout sms \n pour le cluster 3 (Ma Banque)")
+ct.set_ylabel('')
+plt.savefig('optin_cluster3pie.png',bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=600)
+
+# Cluster 2 : Retraités
+ctab = pd.concat([base_quali2['optin_sms'].where(base_quali2['cluster']==2).value_counts(),base_quali2['optin_mail'].where(base_quali2['cluster']==2).value_counts()],axis=1).apply(lambda x: x/x.sum(), axis=0)
+ctab = ctab.transpose()
+ctab = pd.concat([ctab['NC'],ctab['OUI'],ctab['NON']],axis=1)
+ct=ctab.plot( kind='bar', stacked=True, title="Proportion d'Optin/Optout pour le cluster 2 (Retraités)")
+lgd=ct.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+ct.set_ylabel('Proportion')
+#ct.set_xlabel('Classe')
+ct.set_xticklabels(ctab.index, rotation=0) 
+plt.savefig('optin_cluster2.png',bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=600)
+# Pie chart
+optoutsms = optin3.iloc[1,:]
+optoutsms = pd.DataFrame(optoutsms).transpose()
+optoutsms = pd.concat([optoutsms['NC'],optoutsms['OUI'],optoutsms['NON']],axis=1)
+optoutsms = pd.Series(optoutsms.transpose().iloc[:,0])
+ct=optoutsms.plot( kind='pie', title="Proportion d'Optin/Optout mail parmi les Optout sms \n pour le cluster 3 (Ma Banque)")
+ct.set_ylabel('')
+plt.savefig('optin_cluster3pie.png',bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=600)
 
 
 # Ajout de test du CHI2
