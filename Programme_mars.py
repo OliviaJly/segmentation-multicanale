@@ -296,7 +296,7 @@ final_centers = test.cluster_centers_
 
 count=pd.DataFrame(pred+1)[0].value_counts(sort=False)
 count2=pd.DataFrame(count)
-del centers, centers2, centers3, cluster_sum, count, datatest, datatest_5, dist_cluster, dist_to_next_cluster, freq, groupes_cah,
+del centers, centers2, centers3, cluster_sum, datatest, datatest_5, dist_cluster, dist_to_next_cluster, freq, groupes_cah,
 del i, nb_cluster, next_cluster, trans, ind, nb_cluster_sort
 
 # Bar plot freq cluster
@@ -491,3 +491,21 @@ sum(mat_transition['Mars'] == mat_transition['Juin'] & mat_transition['Juin'] ==
 a = np.array(mat_transition['Mars'] == mat_transition['Juin'])
 b = np.array(mat_transition['Juin'] == mat_transition['Septembre'])
 c = (a) and (b)
+
+
+
+# Comparaison clustering septembre sur barycentres mars avec clustering septembre (celui de la prez)
+# Septembre sur barycentres mars : 
+# Classe 1 = Inactifs
+# Classe 2 = Retraités
+# Classe 3 = Ma Banque
+# Classe 4 = CAEL
+
+# Import des résultats du clustering septembre (prez)
+cluster_sept_prez = pd.read_csv('C:/Users/Richard/Documents/GitHub/Segmentation-multicanale2/Données/v2/clusters.csv')
+
+mat_transition_sept = pd.concat([mat_transition['Septembre'],cluster_sept_prez+1],axis=1)
+mat_transition_sept.columns = ['Septembre_centres_mars','Septembre_prez']
+
+pd.crosstab(mat_transition_sept['Septembre_centres_mars'],mat_transition_sept['Septembre_prez'])
+pd.crosstab(mat_transition_sept['Septembre_centres_mars'],mat_transition_sept['Septembre_prez']).apply(lambda r: r/r.sum(), axis=1)

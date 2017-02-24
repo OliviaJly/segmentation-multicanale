@@ -5,8 +5,6 @@ Created on Mon Jan  2 14:08:12 2017
 @author: Lucie
 """
 
-##  Copier le code dans la console python
-
 ########### IMPORT DES DONNEES :
 
 
@@ -39,7 +37,7 @@ df["date_part"] = pd.to_datetime(df["date_part"])
 
 # Verification du type des données :
 types = df.dtypes  # Ok. (Float : int avec décimales)
-
+del types
 
 
 
@@ -68,6 +66,7 @@ plt.axis('equal')
 plt.suptitle('Distribution de la variable top en ligne')
 plt.savefig('distrib_topenligne.png', dpi=600)
 plt.show()
+del count_depose
 
 #on croise top depose et top en ligne avec les connexions CAEL et Ma Banque
 sn.boxplot(x='top_depose', y='Connexion_MaBanque_3m', data=df_quanti)
@@ -75,9 +74,7 @@ sn.boxplot(x='top_depose', y='Connexion_CAEL_3m', data=df_quanti)
 sn.boxplot(x='top_enligne', y='Connexion_MaBanque_3m', data=df_quanti)
 sn.boxplot(x='top_enligne', y='Connexion_CAEL_3m', data=df_quanti)
 
-
 moy = df_quanti.groupby('top_depose')['Connexion_MaBanque_3m', 'Connexion_CAEL_3m'].mean()
-
 #barplot
 barWidth = 0.4
 y1 = moy.ix[0]
@@ -92,7 +89,7 @@ plt.xticks([r + barWidth for r in range(len(y1))], ['Connex MaBanque', 'Connex C
 plt.suptitle('Nb de connexions moyen Ma Banque et CAEL par catégorie de top depose')
 plt.legend()
 plt.savefig('connexions_vs_topdepose.png', dpi=600)
-
+del y1, y2, r2, moy, barWidth
 
 medi = df_quanti.groupby('top_depose')['Connexion_MaBanque_3m', 'Connexion_CAEL_3m'].median()
 # + de connexions MB et CAEL pour les deposes et enligne
@@ -101,7 +98,7 @@ medi = df_quanti.groupby('top_depose')['Connexion_MaBanque_3m', 'Connexion_CAEL_
 layout = dict(autosize=True)
 plt.hist(np.array(df_quanti['nb_contrats_depose']))
 plt.hist(np.array(df_quanti['nb_contrats_enligne']))
-
+del medi
 
 
 ###### Selection des variables interessantes :
@@ -132,9 +129,9 @@ var_drop.append('top_enligne')
 base_quanti = df_quanti.drop(var_drop, axis=1)   # Drop les variables qu'on ne veut plus
 ### Fin code suppression des variables sur 1 et 2 mois
 
-del(df, df_quanti, i, sub_1m, sub_2m, types, var, var_drop, var_names, x)
+del i, sub_1m, sub_2m, var, var_drop, var_names, x, layout
 
-##Sauvegarde intermediaire de la table des var quanti avant transformation 
+##Sauvegarde intermediaire de la table des var quanti avant transformation
 base_quanti.to_csv(path + '/base_quanti.csv', index=False)
 
 ### Recoder les variables comme dans le code SAS (transformations monotones)
@@ -195,6 +192,7 @@ mat_corr = pd.DataFrame(mat_corr, index=names, columns=names)
 #ajout des noms aux lignes et colonnes
 # Corr nb_contrats_depose mabanque = 0.14
 # Corr nb_contrats_depose cael = 0.13
+del mat_corr
 
 scipy.stats.spearmanr(base_quanti2['Connexion_MaBanque_3m'], base_quanti2['nb_contrats_depose'])
 scipy.stats.spearmanr(base_quanti2['Connexion_CAEL_3m'], base_quanti2['nb_contrats_depose'])
@@ -225,7 +223,7 @@ data = [trace]
 fig = go.Figure(data=data, layout=layout)
 # Plot and embed in ipython notebook!
 py.iplot(fig, filename='basic-scatter')
-del(trace, names, layout, data, fig)
+del trace, layout, data, fig, names
 
 
 ## 2eme methode : avec le package matplotlib
@@ -371,7 +369,7 @@ plt.savefig('Connexions_MABANQUE_AGE.png', dpi=600)
 
 # Pas intéressant de regarder les Scatters plots entre les dépose/ en ligne avec CAEL et ma banque :
 # trop peu d'observations sur les personnes qui ont fait plusieurs déposes
-
+del x, y
 
 # Retrait des variables correlees et non discriminantes
 base_quanti2 = base_quanti2.drop(['DEPENSES_RECURRENTES_EST_M', 'SMS_recus_3m',
