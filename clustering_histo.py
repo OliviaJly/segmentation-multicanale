@@ -23,11 +23,11 @@ import seaborn as sn
 path = 'C:/Users/Richard/Documents/GitHub/Segmentation-multicanale2/Données/Historique 3 mois'
 
 # Import des données
-base_quanti = pd.read_csv(path +'/OLIVIA_BASE_QUANTI_SEL.csv', nrows=220000, delimiter=";",
+base_quanti = pd.read_csv(path +'/OLIVIA_BASE_QUANTI_SEL2.csv', nrows=200000, delimiter=";",
                  encoding="ISO-8859-1",
                  dtype={"IDPART_CALCULE2":object}) #var non transformees
 
-base_quantit = pd.read_csv(path +'/BASE_QUANTIT.csv', nrows=220000, delimiter=";",
+base_quantit = pd.read_csv(path +'/OLIVIA_BASE_QUANTIT2.csv', nrows=200000, delimiter=";",
                  encoding="ISO-8859-1",
                  dtype={"IDPART_CALCULE2":object}) #var transformees
 
@@ -50,7 +50,7 @@ data_scale.columns = [s + '_norm' for s in list(base_acp.columns.values)]  # Ren
 pca = PCA(n_components=42)
 pcafit = pca.fit(data_scale)
 var = pca.explained_variance_ratio_
-
+del var
 ## Nouvelles coordonnées
 score = pca.transform(data_scale)
 data_coor = pd.DataFrame(score)
@@ -149,6 +149,9 @@ plt.show()
 # 1er k means
 # on retient les 10 premieres composantes
 data_coor2 = data_coor.iloc[:, :10]
+test = -np.array(data_coor2['Comp_3'])
+data_coor3 = pd.concat([data_coor2.iloc[:,0:2],pd.DataFrame(test),data_coor2.iloc[:,3:10]],axis=1)
+data_coor3 = data_coor3.rename(columns={0: 'Comp_3'})
 
 kmeans = cluster.KMeans(n_clusters=22000, max_iter=1, n_init=1) #random_state=111
 test = kmeans.fit(data_coor3)
@@ -158,11 +161,12 @@ pred = kmeans.predict(data_coor3) #affecte chaque individu au cluster le plus pr
 #### suite du clustering sous SAS - clustering dynamique 
 
 
-data_coor2.to_csv(path + '/coord_ACP_histo.csv', index=False)
+data_coor3.to_csv(path + '/coord_ACP_histo.csv', index=False)
 
 
 
-#evol des variables sur tout l'historique 
+#evol des variables sur tout l'historique
+#Attention ne pas executer  
 base_quanti["date_part"] = pd.to_datetime(base_quanti["date_part"])
 
 sub = list(range(1, 42, 1))
@@ -172,7 +176,7 @@ for i in range(0, 41):
     plt.subplot(9, 5, sub[i])
     sn.boxplot(x='date_part', y=var_names[i], data=base_quanti)
 
-# var non transformées
+# var transformées
 base_quantit["date_part"] = pd.to_datetime(base_quantit["date_part"])
 
 sub = list(range(1, 43, 1))
@@ -181,7 +185,9 @@ var_names = list(base_acp.columns.values)[0:42]
 for i in range(0, 42):
     plt.subplot(9, 5, sub[i])
     sn.boxplot(x='date_part', y=var_names[i], data=base_quantit)
-
+##fin 
+    
+    
 # boxplots individuels pour présenter certains comportements
 sn.boxplot(x='date_part',y='Connexion_MaBanque_3m', data=base_quantit)
 sn.boxplot(x='date_part',y='Connexion_CAEL_3m', data=base_quantit)
@@ -195,7 +201,8 @@ plt.plot(mean_var['Connexion_CAEL_3m'])
 
 #calcul de moyennes sur var non transf
 mean_var_nt = base_quanti.groupby('date_part').mean()
-med_var_nt = base_quanti.groupby('date_part').median()
+mean_var_nt = base_quanti.groupby('date_part').mean()
+
 
 plt.plot(mean_var_nt['Connexion_MaBanque_3m'])
 plt.plot(mean_var_nt['Connexion_CAEL_3m'])
@@ -207,3 +214,14 @@ plt.plot(mean_var_nt['SURFACE_FINANCIERE'])
 plt.plot(mean_var_nt['ENCOURS_DAV'])
 plt.plot(mean_var_nt['Automate_3m'])
 plt.plot(mean_var_nt['Agence_3m'])
+
+
+#calcul de moyennes sur var non transf connexion >0
+connexion_sup0_MB =  base_quanti[base_quanti.Connexion_MaBanque_3m>0]
+connexion_sup0_CAEL =  base_quanti[base_quanti.Connexion_CAEL_3m>0]
+
+mean_var_nt_0_MB = connexion_sup0_MB.groupby('date_part').mean()
+mean_var_nt_0_CAEL = connexion_sup0_CAEL.groupby('date_part').mean()
+
+plt.plot(mean_var_nt_0_MB['Connexion_MaBanque_3m'])
+plt.plot(mean_var_nt_0_CAEL['Connexion_CAEL_3m'])
