@@ -50,7 +50,7 @@ mean = np.mean(base_test, axis=0)
 std = np.std(base_test, axis=0)
 stats = pd.concat([mean, std], axis=1)
 stats.columns = ['mean', 'std']
-del(mean, std)
+del mean, std, stats
 
 # Normaliser les données
 data_scale = pd.DataFrame(scale(base_test))
@@ -61,6 +61,7 @@ data_scale.columns = [s + '_norm' for s in list(base_test.columns.values)]  # Re
 pca = PCA(n_components=39)
 pcafit = pca.fit(data_scale)
 var = pca.explained_variance_ratio_
+
 
 ## Graph de la variance expliquée par les composantes
 pylab.ylim([-0.01, 0.3])
@@ -75,11 +76,13 @@ plt.ylabel('Part de la variance expliquée')
 plt.xlabel('Composantes')
 plt.plot(np.cumsum(var))
 plt.show()
+del var
 
 ## Nouvelle coordonnées
 score = pca.transform(data_scale)
 data_coor = pd.DataFrame(score)
 data_coor.columns = ["Comp_" + str(l) for l in list(range(1, 40, 1))] # Renomer les colonnes
+del data_scale
 
 ## Enregistrement des données data_coor pour programme kmeans_outliers
 data_coor.to_csv(path + '/PCA_coor2.csv', index=False)
@@ -202,3 +205,6 @@ for i in range(len(xs)): #len(xs) = nb d'invidus
     plt.plot(xs[i], ys[i], 'g', zorder=2)
     #plt.text(xs[i]*1.2, ys[i]*1.2, list(base_test2.index)[i], color='b')
 plt.show()
+
+
+del i, score, vect_propres, xs, xvector, ys, yvector
