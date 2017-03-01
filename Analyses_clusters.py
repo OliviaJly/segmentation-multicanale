@@ -313,7 +313,7 @@ del mean_top_enligne, mean_top_depose
 
 
 # Import de la base quali pour mozaic plot
-base_quali = pd.read_table('C:/Users/Richard/Documents/GitHub/Segmentation-multicanale2/Données/base_variables_quali.txt', delimiter=";", dtype={"IDPART_CALCULE":object})
+base_quali = pd.read_table('C:/Users/Richard/Documents/GitHub/Segmentation-multicanale2/Données/v2/base_variables_quali.csv', delimiter=";", dtype={"IDPART_CALCULE":object})
 base_quali2 = pd.concat([base_quali,clustered_data['top_enligne'],clustered_data['top_depose'],clustered_data['cluster']],axis=1)
 
 # Variables quali interessantes :
@@ -477,22 +477,90 @@ p # p < 0.05, on rejette H0
 del optin2, optin3, optin4, optoutmail, optoutsms, g, dof, ctab, p
 
 
+## ANALYSE DE LA CLASSE DES INACTIFS (cluster 1)
 # Croisement clustering et segmentation comportementale (fidelité)
-segm = pd.read_csv('C:/Users/Richard/Documents/GitHub/Segmentation-multicanale2/Données/OLIVIA_FIDELITE_ECHANTILLON.csv', delimiter=";") 
+segm_fidelite = pd.read_csv('C:/Users/Richard/Documents/GitHub/Segmentation-multicanale2/Données/OLIVIA_FIDELITE_ECHANTILLON.csv', delimiter=";") 
 
-mat_segm = pd.concat([pred+1,segm['SGMT_FIDELITE']],axis=1)
-mat_segm = mat_segm.rename(columns={'0': 'cluster'})
+base_quali2 = pd.concat([base_quali2,segm_fidelite['SGMT_FIDELITE']],axis=1)
 
-cros = pd.crosstab(mat_segm['cluster'],mat_segm['SGMT_FIDELITE'])
-cros_pourcent = pd.crosstab(mat_segm['cluster'],mat_segm['SGMT_FIDELITE']).apply(lambda r: r/r.sum(), axis=1)
+cros = pd.crosstab(base_quali2['cluster'],base_quali2['SGMT_FIDELITE'])
+cros_pourcent = pd.crosstab(base_quali2['cluster'],base_quali2['SGMT_FIDELITE']).apply(lambda r: r/r.sum(), axis=1)
 
-
-# Segment fidelité par cluster plot
-ctab = pd.crosstab(mat_segm['cluster'],mat_segm['SGMT_FIDELITE']).apply(lambda x: x/x.sum(), axis=1)
-
-ct=ctab.plot( kind='bar', stacked=True, title='Segment fidelité par classe')
+ct=cros_pourcent.plot( kind='bar', stacked=True, title='Segment fidelité par classe')
 lgd=ct.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 ct.set_ylabel('Proportion')
 ct.set_xlabel('Classe')
-ct.set_xticklabels(ctab.index, rotation=0) 
+ct.set_xticklabels(cros_pourcent.index, rotation=0) 
 plt.savefig('Segment fidelité par cluster.png',  bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=600)
+
+# Croisement clustering et cibles attrition 
+mdc_attri = pd.read_csv(PATH+'/MDC_ATTRITION_09163.csv', delimiter=";", encoding="ISO-8859-1", \
+                        dtype={"ID_PART":object})
+
+#creation des var quali Multibancarise, Clientnonvu, Baissefluxope
+#Si idpart ciblé par le mdc alors = 1, sinon = nan
+mdc_attri.loc[(mdc_attri['COL1']=='CLIENT NON VU')|(mdc_attri['COL2']=='CLIENT NON VU'),"Clientnonvu"]=1
+mdc_attri.loc[(mdc_attri['COL1']=='BAISSE FLUX OPE')|(mdc_attri['COL2']=='BAISSE FLUX OPE'),"Baissefluxope"]=1
+mdc_attri.loc[(mdc_attri['COL1']=='MULTIBANCARISE')|(mdc_attri['COL2']=='MULTIBANCARISE'),"Multibancarise"]=1
+
+mdc_attri2 = mdc_attri[['ID_PART','Multibancarise','Baissefluxope','Clientnonvu']]
+mdc_attri2=mdc_attri2.rename(columns={'ID_PART':'IDPART_CALCULE'})
+mdc_attri3 = mdc_attri2.drop('IDPART_CALCULE', axis=1)  
+
+
+#compte d'individus ciblés sur la base totale de clients 
+count_tot = mdc_attri3.apply(pd.value_counts)
+count_tot = count_tot.transpose()
+count_tot = pd.DataFrame(count_tot).rename(columns={1.0: 'total'})
+
+#jointure sur base quali 
+base_quali3=base_quali2.join(mdc_attri2.set_index('IDPART_CALCULE'), how='left', on='IDPART_CALCULE')
+
+#remplace les nan par 0
+base_quali3.loc[pd.isnull(base_quali3['Multibancarise']),'Multibancarise']=0
+base_quali3.loc[pd.isnull(base_quali3['Clientnonvu']),'Clientnonvu']=0
+base_quali3.loc[pd.isnull(base_quali3['Baissefluxope']),'Baissefluxope']=0
+
+mdc_ech_idpart=base_quali3[['IDPART_CALCULE','Multibancarise','Baissefluxope','Clientnonvu','cluster']]
+
+#compte d'individus ciblés sur l'echantillon en 09/16
+mdc_ech=base_quali3[['Multibancarise','Baissefluxope','Clientnonvu']]
+count_ech=mdc_ech.apply(pd.value_counts)
+count_ech=count_ech.iloc[1]
+count_ech = pd.DataFrame(count_ech).rename(columns={1.0: 'ech'})
+
+#Chaque MDC est représenté avec env la meme proportion dans l'echantillon
+mdc_compar=pd.concat([count_tot,count_ech], axis=1)
+mdc_compar['percent ech/total']=mdc_compar['ech']/mdc_compar['total']
+
+# MDC attrition par cluster 
+cross_tab=mdc_ech_idpart.groupby(['cluster']).sum()
+cross_tab_percent=cross_tab.apply(lambda r: r/r.sum(),axis=0)    
+            
+cross_tab['tot col']=cross_tab.apply(sum,axis=1)
+cross_tab['cluster size']= mdc_ech_idpart['cluster'].value_counts()
+cross_tab.loc['tot row']=cross_tab.apply(sum,axis=0)
+cross_tab_percent['cibles / total']=cross_tab['tot col']/cross_tab['cluster size']*100
+cross_tab_test=cross_tab.iloc[:4,:3]
+cross_tab_test.index=(['Inactifs','Agence','Ma Banque', 'CAEL'])
+
+#graph 
+ct=cross_tab_test.plot( kind='bar', stacked=True, title='Nb de clients ciblés par les MDC attrition dans chaque classe')
+lgd=ct.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+ct.set_ylabel('Nb de clients')
+ct.set_xlabel('Classe')
+ct.set_xticklabels(cross_tab_test.index, rotation=0) 
+
+rects=ct.patches
+rects2=cross_tab['tot col']
+rects2.index=[1,2,3,4,5]
+rects2=rects2.loc[:4]
+
+labels=cross_tab_percent['cibles / total']
+labels2 = [ str(i)[:3]+"%" for i in labels]
+
+for rect, label, rect2 in zip(rects, labels2, rects2):
+    height = rect2
+    ct.text(rect.get_x() + rect.get_width()/2, height+2 , label, ha='center', va='bottom')
+
+plt.savefig('Clusters x MDC attrition.png',  bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=600)
