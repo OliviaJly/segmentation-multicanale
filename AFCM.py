@@ -26,7 +26,7 @@ path = 'C:/Users/Richard/Documents/GitHub/Segmentation-multicanale2/Données'
 base_quali = pd.read_table(path + '/base_variables_quali.txt', delimiter=";", dtype={"IDPART_CALCULE":object})
 types = base_quali.dtypes # Ok
 print(types)
-del(types)
+del types
 
 
 # Import de la base quanti pour recuperation des tops en ligne et dépose
